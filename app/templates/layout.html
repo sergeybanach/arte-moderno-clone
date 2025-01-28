@@ -37,10 +37,35 @@
       </div>
     </nav>
 
-    <main>{% block content %}{% endblock %}</main>
+    <main class="main-content">{% block content %}{% endblock %}</main>
 
-    <footer>
-      <p>&copy; 2025 ArtModerno. Všechna práva vyhrazena.</p>
+    <footer class="footer">
+      <div class="footer-content">
+        <p class="footer-text">
+          © 2025 Arte Moderno. Všechna práva vyhrazena.<br />
+          Sledujte nás na sociálních sítích:
+        </p>
+        <div class="social-links">
+          <a href="#" class="social-link">
+            <img
+              src="{{ url_for('static', filename='logo/facebook.svg') }}"
+              alt="Facebook"
+            />
+          </a>
+          <a href="#" class="social-link">
+            <img
+              src="{{ url_for('static', filename='logo/skill-icons_instagram.svg') }}"
+              alt="Instagram"
+            />
+          </a>
+          <a href="#" class="social-link">
+            <img
+              src="{{ url_for('static', filename='logo/x.svg') }}"
+              alt="Twitter"
+            />
+          </a>
+        </div>
+      </div>
     </footer>
   </body>
 </html>
