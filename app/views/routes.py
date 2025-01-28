@@ -66,3 +66,8 @@ def kontakt():
 
     # GET request => zobrazíme formulář
     return render_template("kontakt.html")
+
+@views.route("/inquiries")
+def list_inquiries():
+    inquiries = Inquiry.query.all()
+    return render_template("list_inquiries.html", inquiries=inquiries)

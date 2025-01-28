@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Seznam dotazů</title>
+</head>
+<body>
+    <h1>Seznam dotazů v DB</h1>
+    <ul>
+    {% for i in inquiries %}
+        <li>
+            <strong>{{ i.name }}</strong> 
+            ({{ i.email }})<br>
+            Předmět: {{ i.subject }}<br>
+            Zpráva: {{ i.message }}<br>
+            <em>vloženo: {{ i.created_at }}</em>
+        </li>
+        <hr>
+    {% endfor %}
+    </ul>
+</body>
+</html>
