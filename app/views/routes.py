@@ -12,6 +12,12 @@ views = Blueprint("views", __name__)
 def home():
     return render_template("home.html")  # jen příklad
 
+@views.route("/galerie")
+def galerie():
+    return render_template("galerie.html")
+
+
+
 @views.route("/kontakt", methods=["GET", "POST"])
 def kontakt():
     if request.method == "POST":
