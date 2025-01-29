@@ -4,7 +4,7 @@ from app import db, mail  # importujeme db a mail z __init__.py
 from flask_mail import Message
 from app import db, bcrypt
 from app.models import User
-from flask_login import login_user, current_user
+from flask_login import login_user, current_user, logout_user, login_required
 
 views = Blueprint("views", __name__)
 
@@ -116,3 +116,27 @@ def register():
     # GET request => zobrazíme šablonu
     return render_template("register.html")
 
+@views.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        email = request.form.get("email")
+        password = request.form.get("password")
+
+        user = User.query.filter_by(email=email).first()
+        if user and bcrypt.check_password_hash(user.password, password):
+            # heslo sedí
+            login_user(user)
+            flash("Přihlášení úspěšné!", "success")
+            return redirect(url_for("views.home"))
+        else:
+            flash("Neplatné přihlašovací údaje!", "error")
+
+    return render_template("login.html")
+
+@views.route("/logout")
+@login_required
+def logout():
+    """Odhlásí uživatele a přesměruje ho na homepage."""
+    logout_user()  # Flask-Login funkce, zruší session pro daného uživatele
+    flash("Byl jste úspěšně odhlášen.", "info")
+    return redirect(url_for("views.home"))
