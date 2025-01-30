@@ -2,52 +2,19 @@
 <html lang="cs">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{% block title %}ArtModerno{% endblock %} | ArtModerno</title>
-    <!-- Google Fonts -->
     <link
       href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
       rel="stylesheet"
     />
     <link
-      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&family=Open+Sans:wght@400;600&family=Playfair+Display:wght@500;600&display=swap"
-      rel="stylesheet"
-    />
-
-    <!-- Vlastní CSS -->
-    <link
       rel="stylesheet"
       href="{{ url_for('static', filename='css/style.css') }}"
     />
-
-    {% block styles %}{% endblock %}
   </head>
   <body>
-    <nav class="navbar">
-      <div class="navbar-logo">
-        <a href="{{ url_for('views.home') }}">
-          <img
-            src="{{ url_for('static', filename='logo/Logo_4_svg.svg') }}"
-            alt="ArtModerno Logo"
-          />
-        </a>
-      </div>
-      <div class="navbar-links">
-        <a href="{{ url_for('views.home') }}" class="nav-link">Home</a>
-        <a href="{{ url_for('views.galerie') }}" class="nav-link">Galerie</a>
-        <a href="{{ url_for('views.kontakt') }}" class="nav-link">Kontakt</a>
-
-        <!-- Podmíněné zobrazení odkazů podle přihlášení uživatele -->
-        {% if current_user.is_authenticated %}
-        <a href="{{ url_for('views.logout') }}" class="nav-link">Odhlásit se</a>
-        {% else %}
-        <a href="{{ url_for('views.register') }}" class="nav-link"
-          >Registrace</a
-        >
-        <a href="{{ url_for('views.login') }}" class="nav-link">Přihlášení</a>
-        {% endif %}
-      </div>
-    </nav>
+    {% include "navbar.html" %}
+    <!-- Vložený navbar na všechny stránky -->
 
     <main class="main-content">{% block content %}{% endblock %}</main>
 
@@ -58,24 +25,21 @@
           Sledujte nás na sociálních sítích:
         </p>
         <div class="social-links">
-          <a href="#" class="social-link">
-            <img
+          <a href="#" class="social-link"
+            ><img
               src="{{ url_for('static', filename='logo/facebook.svg') }}"
               alt="Facebook"
-            />
-          </a>
-          <a href="#" class="social-link">
-            <img
+          /></a>
+          <a href="#" class="social-link"
+            ><img
               src="{{ url_for('static', filename='logo/skill-icons_instagram.svg') }}"
               alt="Instagram"
-            />
-          </a>
-          <a href="#" class="social-link">
-            <img
+          /></a>
+          <a href="#" class="social-link"
+            ><img
               src="{{ url_for('static', filename='logo/x.svg') }}"
               alt="Twitter"
-            />
-          </a>
+          /></a>
         </div>
       </div>
     </footer>

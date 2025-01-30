@@ -1,41 +1,17 @@
-<!DOCTYPE html>
-<html lang="cs">
-<head>
-    <meta charset="UTF-8">
-    <title>Přihlášení</title>
-</head>
-<body>
-    <h1>Přihlášení</h1>
+{% extends "layout.html" %} {% block title %}Přihlášení{% endblock %} {% block
+content %}
+<h1>Přihlášení</h1>
+<form method="POST" action="{{ url_for('views.login') }}">
+  <label for="email">E-mail:</label>
+  <input type="email" name="email" id="email" required /><br /><br />
 
-    <!-- Zobrazení případných flash zpráv (např. chybová hláška při špatném heslu) -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        <ul>
-          {% for category, message in messages %}
-            <li class="alert-{{ category }}">{{ message }}</li>
-          {% endfor %}
-        </ul>
-      {% endif %}
-    {% endwith %}
+  <label for="password">Heslo:</label>
+  <input type="password" name="password" id="password" required /><br /><br />
 
-    <!-- Formulář pro přihlášení -->
-    <form method="POST" action="{{ url_for('views.login') }}">
-        <div>
-            <label for="email">E-mail:</label><br>
-            <input type="email" name="email" id="email" required>
-        </div>
-        <br>
-
-        <div>
-            <label for="password">Heslo:</label><br>
-            <input type="password" name="password" id="password" required>
-        </div>
-        <br>
-
-        <button type="submit">Přihlásit</button>
-    </form>
-
-    <!-- Odkaz na registraci (volitelné) -->
-    <p>Nemáte ještě účet? <a href="{{ url_for('views.register') }}">Zaregistrujte se</a>.</p>
-</body>
-</html>
+  <button type="submit">Přihlásit</button>
+</form>
+<p>
+  Nemáte ještě účet?
+  <a href="{{ url_for('views.register') }}">Zaregistrujte se</a>.
+</p>
+{% endblock %}
