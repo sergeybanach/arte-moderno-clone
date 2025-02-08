@@ -1,12 +1,16 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from app.models import Inquiry
 from app import db, mail  # importujeme db a mail z __init__.py
 from flask_mail import Message
 from app import db, bcrypt
 from app.models import User
 from flask_login import login_user, current_user, logout_user, login_required
+from app.models import Product
+from app.models import Inquiry, User, Product, CartItem
+
 
 views = Blueprint("views", __name__)
+cart = Blueprint("cart", __name__, url_prefix="/cart")
 
 @views.route("/", methods=["GET"])
 def home():
@@ -14,7 +18,14 @@ def home():
 
 @views.route("/galerie")
 def galerie():
-    return render_template("galerie.html")
+    products = Product.query.all()  # ✅ Načítáme všechny produkty
+    print("DEBUG: Produkty v galerii:")
+    for product in products:
+        print(f"ID: {product.id}, Název: {product.name}, Popis: {product.description}, Cena: {product.price}")
+    
+    return render_template("galerie.html", products=products)
+
+
 
 
 
@@ -146,3 +157,61 @@ def logout():
     logout_user()  # Flask-Login funkce, zruší session pro daného uživatele
     flash("Byl jste úspěšně odhlášen.", "info")
     return redirect(url_for("views.home"))
+
+
+@cart.route("/add", methods=["POST"])
+@login_required
+def add_to_cart():
+    """Přidá produkt do košíku (nebo zvýší množství)"""
+    data = request.get_json()
+    product_id = data.get("product_id")
+
+    product = Product.query.get(product_id)
+    if not product:
+        return jsonify({"error": "Produkt nenalezen"}), 404
+
+    cart_item = CartItem.query.filter_by(user_id=current_user.id, product_id=product_id).first()
+
+    if cart_item:
+        cart_item.quantity += 1  # Zvýší množství
+    else:
+        cart_item = CartItem(user_id=current_user.id, product_id=product_id, quantity=1)
+        db.session.add(cart_item)
+
+    db.session.commit()
+    return jsonify({"message": "Produkt přidán do košíku"}), 200
+
+@cart.route("/remove", methods=["POST"])
+@login_required
+def remove_from_cart():
+    """Odebere produkt z košíku"""
+    data = request.get_json()
+    product_id = data.get("product_id")
+
+    cart_item = CartItem.query.filter_by(user_id=current_user.id, product_id=product_id).first()
+    if not cart_item:
+        return jsonify({"error": "Produkt není v košíku"}), 404
+
+    db.session.delete(cart_item)
+    db.session.commit()
+    return jsonify({"message": "Produkt odebrán z košíku"}), 200
+
+@cart.route("/view", methods=["GET"])
+@login_required
+def view_cart():
+    """Vrátí obsah košíku pro přihlášeného uživatele"""
+    cart_items = CartItem.query.filter_by(user_id=current_user.id).all()
+
+    cart_data = [
+        {
+            "id": item.id,
+            "product_id": item.product.id,
+            "name": item.product.name,
+            "price": item.product.price,
+            "quantity": item.quantity,
+            "total_price": item.product.price * item.quantity
+        }
+        for item in cart_items
+    ]
+
+    return jsonify(cart_data), 200

@@ -1,0 +1,38 @@
+<form
+  method="POST"
+  action="{{ url_for('admin.add_product') }}"
+  enctype="multipart/form-data"
+>
+  <label for="position_id">ID pozice:</label>
+  <input
+    type="number"
+    name="position_id"
+    id="position_id"
+    required
+  /><br /><br />
+
+  <label for="name">Název produktu:</label>
+  <input type="text" name="name" id="name" required /><br /><br />
+
+  <label for="price">Cena (Kč):</label>
+  <input
+    type="number"
+    step="0.01"
+    name="price"
+    id="price"
+    required
+  /><br /><br />
+
+  <label for="description">Popis:</label><br />
+  <textarea name="description" id="description" rows="4"></textarea><br /><br />
+
+  <label for="image">Obrázek produktu:</label>
+  <input type="file" name="image" id="image" accept="image/*" /><br /><br />
+
+  <button type="submit">Přidat produkt</button>
+</form>
+
+<!-- 🆕 Přidáváme tlačítko zpět na dashboard -->
+<a href="{{ url_for('admin.dashboard') }}">
+  <button>⬅️ Zpět na admin panel</button>
+</a>

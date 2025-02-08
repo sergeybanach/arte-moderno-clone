@@ -1,0 +1,203 @@
+/* Reset a základní styly */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Montserrat", sans-serif;
+  color: #333;
+  background-color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Navbar - moderní styl */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 5%;
+  background: rgba(255, 255, 255, 0.8); /* Poloprůhledné pozadí */
+  backdrop-filter: blur(10px); /* Efekt rozmazání */
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* Jemný stín */
+  position: fixed;
+  width: 100%;
+  top: 0;
+  z-index: 1000;
+  height: 80px;
+}
+
+/* Logo */
+.navbar-logo img {
+  height: 60px;
+  transition: transform 0.3s ease;
+}
+
+.navbar-logo img:hover {
+  transform: scale(1.1);
+}
+
+/* Navigační odkazy */
+.navbar-links {
+  display: flex;
+  gap: 20px;
+}
+
+/* Odkazy v navbaru */
+.navbar a {
+  color: black; /* Černá barva odkazů */
+  text-decoration: none; /* Odstranění výchozího podtržení */
+  font-weight: 500;
+  padding: 10px 15px;
+  border-radius: 5px;
+  position: relative; /* Umožní přidání vlastního podtržení */
+  transition: all 0.3s ease-in-out;
+  display: inline-block; /* Umožní přizpůsobení šířky podtržení */
+}
+
+/* Efekt při najetí myší - podtržení dál od textu */
+.navbar a:hover::after,
+.navbar a.active::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -1px; /* Posunutí podtržení jen o 1 pixel dolů */
+  width: 100%; /* Přizpůsobení délky textu */
+  height: 2px; /* Tloušťka podtržení */
+  background-color: black; /* Barva podtržení */
+}
+
+/* Responsivní navbar */
+@media (max-width: 768px) {
+  .navbar {
+    flex-direction: column;
+    height: auto;
+    padding: 1rem;
+  }
+
+  .navbar-links {
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+}
+
+.hero-text {
+  font-size: 1rem;
+  font-weight: 200;
+  color: #333;
+  text-align: justify;
+  padding: 0 90px;
+}
+
+/* Hlavní obsah */
+.main-content {
+  flex: 1;
+  padding-top: 20px;
+  text-align: center;
+  margin-top: 100px;
+}
+
+/* Galerie fotek – Pouze pro home.html */
+.home-gallery-container {
+  width: 100%;
+  overflow: hidden;
+}
+
+.home-gallery-flex {
+  display: flex;
+  width: 100%;
+  padding-top: 20px;
+}
+
+.home-gallery-flex .gallery-item {
+  flex: 1;
+  overflow: hidden; /* Zabrání přetékání při zvětšení */
+}
+
+.home-gallery-flex .gallery-item img {
+  width: 100%;
+  height: 250px;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.3s ease-in-out; /* Plynulý efekt */
+}
+
+/* Efekt zvětšení při najetí myší */
+.home-gallery-flex .gallery-item img:hover {
+  transform: scale(1.05); /* Zvětší obrázek o 5% */
+}
+
+/* Footer */
+.footer {
+  width: 100%;
+  background-color: #f9f9f9;
+  border-top: 1px solid #eaeaea;
+  padding: 2rem 0;
+  text-align: center;
+  margin-top: auto;
+}
+
+.footer-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  row-gap: 1rem;
+}
+
+/* Sociální sítě */
+.social-links {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  justify-content: center;
+}
+
+.social-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background-color: #f1f1f1;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.social-link:hover {
+  background-color: #e0e0e0;
+  transform: translateY(-2px);
+}
+
+.social-link img {
+  width: 18px;
+  height: 18px;
+}
+
+/* Responzivita */
+@media (max-width: 900px) {
+  .home-gallery-flex {
+    flex-wrap: wrap;
+  }
+  .home-gallery-flex .gallery-item {
+    flex: 1 1 33.333%; /* 3 sloupce */
+  }
+}
+
+@media (max-width: 600px) {
+  .home-gallery-flex .gallery-item {
+    flex: 1 1 50%; /* 2 sloupce */
+  }
+}
+
+@media (max-width: 400px) {
+  .home-gallery-flex .gallery-item {
+    flex: 1 1 100%; /* 1 obrázek na řádek */
+  }
+}

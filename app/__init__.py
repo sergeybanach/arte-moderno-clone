@@ -6,7 +6,8 @@ from flask_mail import Mail
 from flask_bcrypt import Bcrypt
 from flask_login import LoginManager
 
-# Vytvoření instancí (ale ještě je nepropojujeme s aplikací)
+
+# Inicializace rozšíření (zatím bez propojení s aplikací)
 db = SQLAlchemy()
 migrate = Migrate()
 mail = Mail()
@@ -17,29 +18,32 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
 
-    # Inicializace rozšíření s aplikací
+    # Propojení rozšíření s aplikací
     db.init_app(app)
     migrate.init_app(app, db)
     mail.init_app(app)
     bcrypt.init_app(app)
     login_manager.init_app(app)
 
-    # Nastavení login_view (kam se nepřihlášený uživatel přesměruje)
     login_manager.login_view = "views.login"
-    # Volitelně: kategorie pro flash zprávu
     login_manager.login_message_category = "info"
 
-    # Import modelů AŽ PO inicializaci db, abychom předešli kruhovým importům
+    # Import modelů AŽ PO inicializaci db, aby se předešlo kruhovým importům
     with app.app_context():
-        from app.models import User  # User i Inquiry, ale stačí pro user_loader
+        from app.models import User
 
         @login_manager.user_loader
         def load_user(user_id):
-            # Funkce, kterou volá Flask-Login k načtení uživatele ze session
             return User.query.get(int(user_id))
 
-    # Registrace blueprintů
+    # Import blueprintů PO inicializaci db
     from app.views.routes import views
+    from app.views.admin_routes import admin  # ✅ Opraveno, aby nevznikl circular import
+    from app.views.cart_routes import cart
+
+    app.register_blueprint(cart)
+
     app.register_blueprint(views)
+    app.register_blueprint(admin)
 
     return app

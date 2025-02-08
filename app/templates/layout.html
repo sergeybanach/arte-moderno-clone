@@ -2,44 +2,39 @@
 <html lang="cs">
   <head>
     <meta charset="UTF-8" />
-    <title>{% block title %}ArtModerno{% endblock %} | ArtModerno</title>
-    <link
-      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
+    <title>ArtModerno | {% block title %}{% endblock %}</title>
     <link
       rel="stylesheet"
-      href="{{ url_for('static', filename='css/style.css') }}"
+      href="{{ url_for('static', filename='css/main.css') }}"
     />
   </head>
   <body>
     {% include "navbar.html" %}
-    <!-- Vložený navbar na všechny stránky -->
 
     <main class="main-content">{% block content %}{% endblock %}</main>
 
     <footer class="footer">
       <div class="footer-content">
-        <p class="footer-text">
-          © 2025 Arte Moderno. Všechna práva vyhrazena.<br />
-          Sledujte nás na sociálních sítích:
-        </p>
+        <p class="footer-text">© 2025 Arte Moderno. Všechna práva vyhrazena.</p>
         <div class="social-links">
-          <a href="#" class="social-link"
-            ><img
+          <a href="#" class="social-link">
+            <img
               src="{{ url_for('static', filename='logo/facebook.svg') }}"
               alt="Facebook"
-          /></a>
-          <a href="#" class="social-link"
-            ><img
+            />
+          </a>
+          <a href="#" class="social-link">
+            <img
               src="{{ url_for('static', filename='logo/skill-icons_instagram.svg') }}"
               alt="Instagram"
-          /></a>
-          <a href="#" class="social-link"
-            ><img
+            />
+          </a>
+          <a href="#" class="social-link">
+            <img
               src="{{ url_for('static', filename='logo/x.svg') }}"
-              alt="Twitter"
-          /></a>
+              alt="Twitter/X"
+            />
+          </a>
         </div>
       </div>
     </footer>

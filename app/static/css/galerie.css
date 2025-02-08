@@ -1,0 +1,58 @@
+/* Galerie - hlavní kontejner */
+.gallery-container {
+    width: 90%;
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+    padding-bottom: 40px;
+  }
+  
+  /* Každý produkt */
+  .gallery-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 40px;
+  }
+  
+  .gallery-item.reverse {
+    flex-direction: row-reverse;
+  }
+  
+  /* Obrázek v rámečku */
+  .image-frame {
+    width: 400px;
+    height: 400px;
+    background-color: #f4f4f4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 5px solid #ccc;
+    border-radius: 10px;
+  }
+  
+  /* Text */
+  .gallery-info {
+    flex: 1;
+    max-width: 50%;
+  }
+  
+  .gallery-info h3 {
+    font-size: 1.8rem;
+    font-weight: bold;
+  }
+  
+  .gallery-description {
+    font-size: 1.2rem;
+    color: #555;
+    margin-bottom: 10px;
+  }
+  
+  .gallery-price {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #27ae60;
+  }
+  

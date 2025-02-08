@@ -1,0 +1,128 @@
+import os
+from flask import current_app, Blueprint, render_template, request, redirect, url_for, flash, session
+from werkzeug.utils import secure_filename
+from functools import wraps
+from app.models import Product
+from app import db
+
+admin = Blueprint("admin", __name__, url_prefix="/admin")
+
+# Používáme proměnné prostředí pro bezpečnost
+ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "admin")
+ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "arte2024")
+
+# Dekorátor pro zabezpečení admin panelu
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if "admin_logged_in" not in session:
+            flash("Nemáte oprávnění pro vstup!", "error")
+            return redirect(url_for("admin.login"))
+        return f(*args, **kwargs)
+    return decorated_function
+
+@admin.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        username = request.form.get("username")
+        password = request.form.get("password")
+
+        if username == ADMIN_USERNAME and password == ADMIN_PASSWORD:
+            session["admin_logged_in"] = True
+            flash("Úspěšně přihlášen!", "success")
+            return redirect(url_for("admin.dashboard"))
+        else:
+            flash("Neplatné přihlašovací údaje!", "error")
+
+    return render_template("admin.html")
+
+@admin.route("/logout")
+@admin_required
+def logout():
+    session.pop("admin_logged_in", None)
+    flash("Byl jste úspěšně odhlášen.", "info")
+    return redirect(url_for("admin.login"))
+
+@admin.route("/dashboard")
+@admin_required
+def dashboard():
+    products = Product.query.all()
+    return render_template("admin_dashboard.html", products=products)
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in current_app.config['ALLOWED_EXTENSIONS']
+
+@admin.route("/add_product", methods=["GET", "POST"])
+@admin_required
+def add_product():
+    if request.method == "POST":
+        position_id = request.form.get("position_id")
+        name = request.form.get("name")
+        price = request.form.get("price")
+        description = request.form.get("description")
+        image = request.files.get("image")
+
+        existing_product = Product.query.filter_by(position_id=position_id).first()
+        if existing_product:
+            flash("Pod tímto ID už existuje produkt!", "warning")
+            return redirect(url_for("admin.edit_product", product_id=existing_product.id))
+
+        image_filename = None
+        if image and allowed_file(image.filename):
+            filename = secure_filename(image.filename)
+            image_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
+            image.save(image_path)
+            image_filename = filename
+
+        new_product = Product(position_id=position_id, name=name, price=price, description=description, image_filename=image_filename)
+        db.session.add(new_product)
+        db.session.commit()
+
+        flash("Produkt byl úspěšně přidán!", "success")
+        return redirect(url_for("admin.dashboard"))
+
+    return render_template("add_product.html")
+
+@admin.route("/edit_product/<int:product_id>", methods=["GET", "POST"])
+@admin_required
+def edit_product(product_id):
+    product = Product.query.get_or_404(product_id)
+
+    if request.method == "POST":
+        product.position_id = request.form.get("position_id")
+        product.name = request.form.get("name")
+        product.price = request.form.get("price")
+        product.description = request.form.get("description")
+
+        # Kontrola, zda má být smazán existující obrázek
+        if request.form.get("delete_image"):
+            if product.image_filename:
+                # Smazání souboru z diskového úložiště
+                image_path = os.path.join(current_app.config['UPLOAD_FOLDER'], product.image_filename)
+                if os.path.exists(image_path):
+                    os.remove(image_path)
+                product.image_filename = None  # Smazání odkazu na obrázek v databázi
+
+        # Nahrání nového obrázku
+        image = request.files.get("image")
+        if image and allowed_file(image.filename):
+            filename = secure_filename(image.filename)
+            image_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
+            image.save(image_path)
+            product.image_filename = filename
+
+        db.session.commit()
+        flash("Produkt byl úspěšně aktualizován!", "success")
+        return redirect(url_for("admin.dashboard"))
+
+    return render_template("edit_product.html", product=product)
+
+
+@admin.route("/delete_product/<int:product_id>", methods=["POST"])
+@admin_required
+def delete_product(product_id):
+    product = Product.query.get_or_404(product_id)
+    db.session.delete(product)
+    db.session.commit()
+    flash("Produkt byl úspěšně smazán!", "success")
+    return redirect(url_for("admin.dashboard"))

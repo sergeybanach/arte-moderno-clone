@@ -1,0 +1,42 @@
+{% extends "layout.html" %} {% block title %}Admin Panel{% endblock %} {% block
+content %}
+<h2>Admin Panel - ArteModerno</h2>
+<a href="{{ url_for('admin.logout') }}">Odhlásit se</a>
+
+<h3>Správa produktů</h3>
+<a href="{{ url_for('admin.add_product') }}">➕ Přidat nový produkt</a>
+
+<table border="1">
+  <tr>
+    <th>ID</th>
+    <th>Název</th>
+    <th>Cena</th>
+    <th>Akce</th>
+  </tr>
+  {% for product in products %}
+  <tr>
+    <td>{{ product.position_id }}</td>
+    <td>{{ product.name }}</td>
+    <td>{{ product.price }} Kč</td>
+    <td>
+      <a href="{{ url_for('admin.edit_product', product_id=product.id) }}"
+        >✏️ Upravit</a
+      >
+
+      <form
+        method="POST"
+        action="{{ url_for('admin.delete_product', product_id=product.id) }}"
+        style="display: inline"
+      >
+        <button
+          type="submit"
+          onclick="return confirm('Opravdu chcete smazat tento produkt?')"
+        >
+          🗑️ Smazat
+        </button>
+      </form>
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+{% endblock %}
