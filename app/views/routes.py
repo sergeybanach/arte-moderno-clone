@@ -7,6 +7,7 @@ from app.models import User
 from flask_login import login_user, current_user, logout_user, login_required
 from app.models import Product
 from app.models import Inquiry, User, Product, CartItem
+from flask import session
 
 
 views = Blueprint("views", __name__)
@@ -29,63 +30,36 @@ def galerie():
 
 
 
-@views.route("/kontakt", methods=["GET", "POST"])
+@views.route('/kontakt', methods=['GET', 'POST'])
 def kontakt():
-    if request.method == "POST":
-        # 1. Získáme data z formuláře
-        name = request.form.get("name")
-        email = request.form.get("email")
-        subject = request.form.get("subject")
-        message = request.form.get("message")
+    if request.method == 'POST':
+        name = request.form.get('name')
+        email = request.form.get('email')
+        subject = request.form.get('subject') or 'Bez předmětu'
+        message = request.form.get('message')
 
-        # 2. Uložíme do DB
-        new_inquiry = Inquiry(
-            name=name,
-            email=email,
-            subject=subject,
-            message=message
-        )
-        db.session.add(new_inquiry)
-        db.session.commit()
+        try:
+            owner_msg = Message(subject=f"Nová zpráva od {name} - {subject}",
+                                sender=email,
+                                recipients=['artemodernoblaha@gmail.com'],
+                                body=f"Od: {name} <{email}>\n\n{message}")
+            mail.send(owner_msg)
 
-        # 3. Odeslat e-maily
+            confirmation_msg = Message(subject="Děkujeme za vaši zprávu",
+                                       sender='artemodernoblaha@gmail.com',
+                                       recipients=[email],
+                                       body=f"Dobrý den {name},\n\nDěkujeme za vaši zprávu. Odpovíme vám co nejdříve.\n\nVaše zpráva:\n{message}\n\nS pozdravem,\nArte Moderno")
+            mail.send(confirmation_msg)
 
-        # a) E-mail majiteli
-        #    Odesílatel i příjemce bude stejný e-mail (váš), např. "artemodernoblaha@gmail.com"
-        owner_msg = Message(
-            subject=f"Nový dotaz od {name}",
-            sender="artemodernoblaha@gmail.com",           # MUSÍ odpovídat MAIL_USERNAME v configu
-            recipients=["artemodernoblaha@gmail.com"],     # stejné, aby došlo na váš mail
-            body=(
-                f"Nový dotaz od {name} (odeslal z e-mailu: {email}).\n\n"
-                f"Předmět: {subject}\n\n"
-                f"Znění zprávy:\n{message}\n\n"
-                "Toto je automatická notifikace."
-            )
-        )
-        mail.send(owner_msg)
+            flash('Zpráva byla úspěšně odeslána! Potvrzení bylo zasláno na váš e-mail.', 'success')
+        except Exception as e:
+            print(f"Chyba při odesílání e-mailu: {e}")
+            flash('Odeslání zprávy selhalo. Zkuste to prosím znovu později.', 'error')
 
-        # b) E-mail klientovi (potvrzení)
-        #    Odesílatel bude váš stejný e-mail, příjemcem je e-mail z formuláře
-        client_msg = Message(
-            subject="Děkujeme za váš dotaz",
-            sender="artemodernoblaha@gmail.com",
-            recipients=[email],
-            body=(
-                f"Dobrý den, {name},\n\n"
-                f"Děkujeme za váš dotaz (předmět: {subject}).\n"
-                "Brzy se vám ozveme a váš dotaz zodpovíme.\n\n"
-                "S pozdravem,\n"
-                "ArteModerní Tým"
-            )
-        )
-        mail.send(client_msg)
+        return redirect(url_for('views.kontakt'))
 
-        flash("Váš dotaz byl úspěšně odeslán!", "success")
-        return redirect(url_for("views.kontakt"))
+    return render_template('kontakt.html')
 
-    # GET request => zobrazíme formulář
-    return render_template("kontakt.html")
 
 @views.route("/inquiries")
 def list_inquiries():
@@ -94,54 +68,55 @@ def list_inquiries():
 
 @views.route("/register", methods=["GET", "POST"])
 def register():
-    # Pokud je uživatel už přihlášen, přesměrujeme ho domů (volitelné)
     if current_user.is_authenticated:
         flash("Jste již přihlášen/a.", "info")
         return redirect(url_for("views.home"))
 
     if request.method == "POST":
-        # 1) Načteme data z formuláře
         username = request.form.get("username")
         email = request.form.get("email")
         password = request.form.get("password")
         confirm_password = request.form.get("confirm_password")
 
-        # 2) Základní validace - Kontrola shody hesel
         if password != confirm_password:
             flash("Hesla se neshodují!", "error")
             return redirect(url_for("views.register"))
-        
-        # 3) Ověřit, zda už neexistuje uživatel s daným e-mailem
+
         existing_user = User.query.filter_by(email=email).first()
         if existing_user:
             flash("E-mail je již používán. Zvolte jiný.", "error")
             return redirect(url_for("views.register"))
 
-        # 4) Vytvoření nového uživatele
         hashed_password = bcrypt.generate_password_hash(password).decode("utf-8")
-        new_user = User(username=username, email=email, password=hashed_password)
+        new_user = User(username=username, email=email, password=hashed_password, role='user')  # Role je nastavená na 'user'
+        
         db.session.add(new_user)
         db.session.commit()
 
-        # 5) (Volitelné) Hned přihlásit nového uživatele
         login_user(new_user)
         flash("Registrace proběhla úspěšně. Nyní jste přihlášen/a.", "success")
-        
-        # 6) Přesměrovat na homepage (nebo kam chcete)
         return redirect(url_for("views.home"))
 
-    # GET request => zobrazíme šablonu
     return render_template("register.html")
+
 
 @views.route("/login", methods=["GET", "POST"])
 def login():
+    if current_user.is_authenticated:
+        flash("Jste již přihlášen/a.", "info")
+        return redirect(url_for("views.home"))
+
     if request.method == "POST":
         email = request.form.get("email")
         password = request.form.get("password")
 
         user = User.query.filter_by(email=email).first()
+
         if user and bcrypt.check_password_hash(user.password, password):
-            # heslo sedí
+            if user.role == 'admin':
+                flash("Přístup do admin panelu je oddělený. Použijte admin přihlášení.", "error")
+                return redirect(url_for("views.login"))
+
             login_user(user)
             flash("Přihlášení úspěšné!", "success")
             return redirect(url_for("views.home"))
@@ -149,6 +124,8 @@ def login():
             flash("Neplatné přihlašovací údaje!", "error")
 
     return render_template("login.html")
+
+
 
 @views.route("/logout")
 @login_required

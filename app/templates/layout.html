@@ -7,9 +7,67 @@
       rel="stylesheet"
       href="{{ url_for('static', filename='css/main.css') }}"
     />
+    <style>
+      /* Stylování flash zpráv */
+      .flash-container {
+        position: fixed;
+        top: 10px;
+        right: 10px;
+        width: 300px;
+        z-index: 1000;
+      }
+
+      .flash-message {
+        padding: 15px;
+        margin-bottom: 10px;
+        border-radius: 5px;
+        color: white;
+        font-weight: bold;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        animation: fadeIn 0.5s ease-in-out;
+      }
+
+      .alert-success {
+        background-color: #28a745;
+      }
+
+      .alert-error {
+        background-color: #dc3545;
+      }
+
+      .alert-info {
+        background-color: #17a2b8;
+      }
+
+      .alert-warning {
+        background-color: #ffc107;
+        color: black;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(-10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+    </style>
   </head>
   <body>
     {% include "navbar.html" %}
+
+    <!-- Flash zprávy -->
+    {% with messages = get_flashed_messages(with_categories=true) %} {% if
+    messages %}
+    <div class="flash-container">
+      {% for category, message in messages %}
+      <div class="flash-message alert-{{ category }}">{{ message }}</div>
+      {% endfor %}
+    </div>
+    {% endif %} {% endwith %}
 
     <main class="main-content">{% block content %}{% endblock %}</main>
 
@@ -38,5 +96,16 @@
         </div>
       </div>
     </footer>
+
+    <!-- Skript pro automatické skrytí flash zpráv po 5 sekundách -->
+    <script>
+      setTimeout(function () {
+        const flashMessages = document.querySelectorAll(".flash-message");
+        flashMessages.forEach((msg) => {
+          msg.style.opacity = "0";
+          setTimeout(() => msg.remove(), 500); // Odstranění zprávy z DOM po zmizení
+        });
+      }, 5000);
+    </script>
   </body>
 </html>

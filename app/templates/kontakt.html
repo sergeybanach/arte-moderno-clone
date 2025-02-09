@@ -1,6 +1,7 @@
 {% extends "layout.html" %} {% block title %}Kontakt{% endblock %} {% block
 content %}
 <h1>Kontakt</h1>
+
 <form method="POST" action="{{ url_for('views.kontakt') }}">
   <label for="name">Jméno:</label>
   <input type="text" id="name" name="name" required /><br /><br />

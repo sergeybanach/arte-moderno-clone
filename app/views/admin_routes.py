@@ -4,37 +4,54 @@ from werkzeug.utils import secure_filename
 from functools import wraps
 from app.models import Product
 from app import db
+from flask_login import current_user
+from app.models import User  # Import modelu User
+from app import bcrypt       # Import bcrypt pro ověřování hesla
+
 
 admin = Blueprint("admin", __name__, url_prefix="/admin")
 
-# Používáme proměnné prostředí pro bezpečnost
-ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "admin")
-ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "arte2024")
 
 # Dekorátor pro zabezpečení admin panelu
 def admin_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if "admin_logged_in" not in session:
-            flash("Nemáte oprávnění pro vstup!", "error")
+        if not current_user.is_authenticated:
+            flash("Musíte být přihlášen/a jako administrátor.", "error")
             return redirect(url_for("admin.login"))
+
+        if current_user.role != 'admin':
+            flash("Nemáte oprávnění přistupovat k admin panelu.", "error")
+            return redirect(url_for("views.home"))
+
         return f(*args, **kwargs)
     return decorated_function
 
+
+from flask_login import login_user
+
 @admin.route("/login", methods=["GET", "POST"])
 def login():
+    if current_user.is_authenticated and current_user.role == "admin":
+        return redirect(url_for("admin.dashboard"))
+
     if request.method == "POST":
         username = request.form.get("username")
         password = request.form.get("password")
 
-        if username == ADMIN_USERNAME and password == ADMIN_PASSWORD:
-            session["admin_logged_in"] = True
+        admin_user = User.query.filter_by(username=username, role='admin').first()
+
+        if admin_user and bcrypt.check_password_hash(admin_user.password, password):
+            login_user(admin_user)  # Flask-Login
             flash("Úspěšně přihlášen!", "success")
             return redirect(url_for("admin.dashboard"))
         else:
             flash("Neplatné přihlašovací údaje!", "error")
 
     return render_template("admin.html")
+
+
+
 
 @admin.route("/logout")
 @admin_required
@@ -46,6 +63,7 @@ def logout():
 @admin.route("/dashboard")
 @admin_required
 def dashboard():
+    print(f"DEBUG: Přihlášený uživatel: {current_user.username}, Role: {current_user.role}")
     products = Product.query.all()
     return render_template("admin_dashboard.html", products=products)
 
