@@ -2,6 +2,8 @@ import os
 
 class Config:
     SECRET_KEY = os.getenv('SECRET_KEY', 'arte_moderno')
+    WTF_CSRF_SECRET_KEY = os.getenv('WTF_CSRF_SECRET_KEY', 'c0ea893fc51c8912e8f18bbde18cbdd78fe05014f70a2dd94a775a7ed05eb2ce')
+    WTF_CSRF_ENABLED = True
     SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL', 'sqlite:///arte_moderno.db')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     UPLOAD_FOLDER = os.path.join(os.getcwd(), 'app', 'static', 'uploads')

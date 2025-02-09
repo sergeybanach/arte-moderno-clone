@@ -28,6 +28,8 @@ content %}
         action="{{ url_for('admin.delete_product', product_id=product.id) }}"
         style="display: inline"
       >
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <!-- CSRF token -->
         <button
           type="submit"
           onclick="return confirm('Opravdu chcete smazat tento produkt?')"

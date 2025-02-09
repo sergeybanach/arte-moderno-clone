@@ -1,26 +1,15 @@
-{% extends "layout.html" %} {% block title %}Admin Login{% endblock %} {% block
-content %}
-<div class="admin-login">
-  <h2>Admin Přihlášení</h2>
+{% extends "layout.html" %} {% block title %}Admin Přihlášení{% endblock %} {%
+block content %}
+<h1>Admin Přihlášení</h1>
+<form method="POST" action="{{ url_for('admin.login') }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> <!-- CSRF token -->
 
-  <!-- Flash zprávy -->
-  {% with messages = get_flashed_messages(with_categories=true) %} {% if
-  messages %}
-  <ul>
-    {% for category, message in messages %}
-    <li class="alert-{{ category }}">{{ message }}</li>
-    {% endfor %}
-  </ul>
-  {% endif %} {% endwith %}
+  <label for="username">Uživatelské jméno:</label>
+  <input type="text" name="username" id="username" required /><br /><br />
 
-  <form method="POST" action="{{ url_for('admin.login') }}">
-    <label for="username">Uživatelské jméno:</label>
-    <input type="text" name="username" id="username" required /><br /><br />
+  <label for="password">Heslo:</label>
+  <input type="password" name="password" id="password" required /><br /><br />
 
-    <label for="password">Heslo:</label>
-    <input type="password" name="password" id="password" required /><br /><br />
-
-    <button type="submit">Přihlásit</button>
-  </form>
-</div>
+  <button type="submit">Přihlásit</button>
+</form>
 {% endblock %}

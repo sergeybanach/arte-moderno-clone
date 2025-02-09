@@ -2,13 +2,13 @@
 <html lang="cs">
   <head>
     <meta charset="UTF-8" />
+
     <title>ArtModerno | {% block title %}{% endblock %}</title>
     <link
       rel="stylesheet"
       href="{{ url_for('static', filename='css/main.css') }}"
     />
     <style>
-      /* Stylování flash zpráv */
       .flash-container {
         position: fixed;
         top: 10px;
@@ -16,7 +16,6 @@
         width: 300px;
         z-index: 1000;
       }
-
       .flash-message {
         padding: 15px;
         margin-bottom: 10px;
@@ -26,24 +25,19 @@
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         animation: fadeIn 0.5s ease-in-out;
       }
-
       .alert-success {
         background-color: #28a745;
       }
-
       .alert-error {
         background-color: #dc3545;
       }
-
       .alert-info {
         background-color: #17a2b8;
       }
-
       .alert-warning {
         background-color: #ffc107;
         color: black;
       }
-
       @keyframes fadeIn {
         from {
           opacity: 0;
@@ -58,19 +52,13 @@
   </head>
   <body>
     {% include "navbar.html" %}
-
-    <!-- Flash zprávy -->
-    {% with messages = get_flashed_messages(with_categories=true) %} {% if
-    messages %}
     <div class="flash-container">
-      {% for category, message in messages %}
+      {% with messages = get_flashed_messages(with_categories=true) %} {% if
+      messages %} {% for category, message in messages %}
       <div class="flash-message alert-{{ category }}">{{ message }}</div>
-      {% endfor %}
+      {% endfor %} {% endif %} {% endwith %}
     </div>
-    {% endif %} {% endwith %}
-
     <main class="main-content">{% block content %}{% endblock %}</main>
-
     <footer class="footer">
       <div class="footer-content">
         <p class="footer-text">© 2025 Arte Moderno. Všechna práva vyhrazena.</p>
@@ -96,16 +84,19 @@
         </div>
       </div>
     </footer>
-
-    <!-- Skript pro automatické skrytí flash zpráv po 5 sekundách -->
     <script>
       setTimeout(function () {
         const flashMessages = document.querySelectorAll(".flash-message");
         flashMessages.forEach((msg) => {
           msg.style.opacity = "0";
-          setTimeout(() => msg.remove(), 500); // Odstranění zprávy z DOM po zmizení
+          setTimeout(() => msg.remove(), 500);
         });
       }, 5000);
+
+      // Ensure CSRF token is globally available
+      window.CSRF_TOKEN = document
+        .querySelector('meta[name="csrf-token"]')
+        .getAttribute("content");
     </script>
   </body>
 </html>

@@ -3,6 +3,8 @@ content %}
 <h1>Kontakt</h1>
 
 <form method="POST" action="{{ url_for('views.kontakt') }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> <!-- CSRF token -->
+
   <label for="name">Jméno:</label>
   <input type="text" id="name" name="name" required /><br /><br />
 
@@ -13,9 +15,10 @@ content %}
   <input type="text" id="subject" name="subject" /><br /><br />
 
   <label for="message">Zpráva:</label><br />
-  <textarea id="message" name="message" rows="5" cols="40" required></textarea
-  ><br /><br />
+  <textarea id="message" name="message" rows="5" cols="40" required></textarea><br /><br />
 
   <button type="submit">Odeslat</button>
+</form>
+
 </form>
 {% endblock %}

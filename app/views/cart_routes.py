@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, render_template
 from flask_login import login_required, current_user
 from app.models import Product, CartItem
 from app import db
@@ -42,18 +42,11 @@ def remove_from_cart():
 @cart.route("/view", methods=["GET"])
 @login_required
 def view_cart():
+    # Načti položky košíku aktuálně přihlášeného uživatele
     cart_items = CartItem.query.filter_by(user_id=current_user.id).all()
 
-    cart_data = [
-        {
-            "id": item.id,
-            "product_id": item.product.id,
-            "name": item.product.name,
-            "price": item.product.price,
-            "quantity": item.quantity,
-            "total_price": item.product.price * item.quantity
-        }
-        for item in cart_items
-    ]
+    # Výpočet celkové ceny košíku
+    total_price = sum(item.product.price * item.quantity for item in cart_items)
 
-    return jsonify(cart_data), 200
+    # Vykresli šablonu cart.html s položkami košíku a celkovou cenou
+    return render_template("cart.html", cart_items=cart_items, total_price=total_price)

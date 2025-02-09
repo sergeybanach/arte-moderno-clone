@@ -18,6 +18,8 @@ block content %}
   action="{{ url_for('admin.edit_product', product_id=product.id) }}"
   enctype="multipart/form-data"
 >
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+  <!-- CSRF token -->
   <label for="position_id">ID pozice:</label>
   <input
     type="number"
