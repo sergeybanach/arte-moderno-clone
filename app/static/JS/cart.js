@@ -3,17 +3,18 @@ const csrfToken = document
   .querySelector('meta[name="csrf-token"]')
   .getAttribute("content");
 
-document.querySelectorAll(".add-to-cart").forEach((button) => {
+// Přidání event listeneru na všechna tlačítka "Koupit"
+document.querySelectorAll(".buy-button").forEach((button) => {
   button.addEventListener("click", function () {
-    const productId = this.dataset.productId;
+    const productId = this.dataset.productId; // Načtení ID produktu
 
     fetch("/cart/add", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "X-CSRFToken": csrfToken,
+        "X-CSRFToken": csrfToken, // Ochrana proti CSRF
       },
-      body: JSON.stringify({ product_id: productId }),
+      body: JSON.stringify({ product_id: productId }), // Odeslání ID produktu
     })
       .then((response) => {
         if (!response.ok) {
@@ -22,7 +23,8 @@ document.querySelectorAll(".add-to-cart").forEach((button) => {
         return response.json();
       })
       .then((data) => {
-        alert(data.message);
+        alert(data.message); // Zobrazení zprávy o úspěchu
+        updateCartCount(); // Aktualizace počtu položek v košíku
       })
       .catch((error) => {
         console.error("Chyba:", error);
@@ -30,3 +32,17 @@ document.querySelectorAll(".add-to-cart").forEach((button) => {
       });
   });
 });
+
+// Funkce pro aktualizaci počtu položek v košíku v navbaru
+function updateCartCount() {
+  fetch("/cart/count", {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      document.getElementById("cart-count").innerText = data.cart_item_count; // Aktualizace počtu v navbaru
+    });
+}

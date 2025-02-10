@@ -5,25 +5,30 @@ from app import db
 
 cart = Blueprint("cart", __name__, url_prefix="/cart")
 
-@cart.route("/add", methods=["POST"])
+@cart.route('/add', methods=['POST'])
 @login_required
 def add_to_cart():
     data = request.get_json()
-    product_id = data.get("product_id")
+    product_id = data.get('product_id')
+
+    if not product_id:
+        return jsonify({'message': 'Produkt nebyl nalezen.'}), 400
 
     product = Product.query.get(product_id)
     if not product:
-        return jsonify({"error": "Produkt nenalezen"}), 404
+        return jsonify({'message': 'Produkt neexistuje.'}), 404
 
-    cart_item = CartItem.query.filter_by(user_id=current_user.id, product_id=product_id).first()
-    if cart_item:
-        cart_item.quantity += 1
+    # Zkontroluj, zda už produkt není v košíku
+    existing_item = CartItem.query.filter_by(user_id=current_user.id, product_id=product_id).first()
+    if existing_item:
+        existing_item.quantity += 1  # Zvyšte množství, pokud už produkt existuje
     else:
-        cart_item = CartItem(user_id=current_user.id, product_id=product_id, quantity=1)
-        db.session.add(cart_item)
+        new_item = CartItem(user_id=current_user.id, product_id=product_id, quantity=1)
+        db.session.add(new_item)
 
     db.session.commit()
-    return jsonify({"message": "Produkt přidán do košíku"}), 200
+
+    return jsonify({'message': f'Produkt {product.name} byl přidán do košíku.'}), 200
 
 @cart.route("/remove", methods=["POST"])
 @login_required
@@ -39,14 +44,20 @@ def remove_from_cart():
     db.session.commit()
     return jsonify({"message": "Produkt odebrán z košíku"}), 200
 
-@cart.route("/view", methods=["GET"])
+@cart.route('/view', methods=['GET'])
 @login_required
 def view_cart():
-    # Načti položky košíku aktuálně přihlášeného uživatele
     cart_items = CartItem.query.filter_by(user_id=current_user.id).all()
-
-    # Výpočet celkové ceny košíku
     total_price = sum(item.product.price * item.quantity for item in cart_items)
 
-    # Vykresli šablonu cart.html s položkami košíku a celkovou cenou
-    return render_template("cart.html", cart_items=cart_items, total_price=total_price)
+    return render_template('cart.html', cart_items=cart_items, total_price=total_price)
+
+# Route pro aktualizaci počtu položek v košíku (pro JS)
+@cart.route('/count', methods=['GET'])
+@login_required
+def cart_count():
+    cart_items = CartItem.query.filter_by(user_id=current_user.id).all()
+    cart_item_count = sum(item.quantity for item in cart_items)
+
+    return jsonify({'cart_item_count': cart_item_count})
+

@@ -21,11 +21,16 @@ styles %}
         {{ product.description or 'Žádný popis není dostupný' }}
       </p>
       <p class="gallery-price"><strong>{{ product.price }} Kč</strong></p>
-      <button class="buy-button">🛒 Koupit</button>
+      <button class="buy-button" data-product-id="{{ product.id }}">
+        🛒 Koupit
+      </button>
     </div>
   </div>
   {% else %}
   <p class="empty-gallery-message">Zatím zde nejsou žádné produkty.</p>
   {% endfor %}
 </div>
+
+<script src="{{ url_for('static', filename='js/cart.js') }}"></script>
+<!-- Připojení JS -->
 {% endblock %}
