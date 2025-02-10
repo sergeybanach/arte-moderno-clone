@@ -1,44 +1,155 @@
 {% extends "layout.html" %} {% block title %}Admin Panel{% endblock %} {% block
 content %}
 <h2>Admin Panel - ArteModerno</h2>
-<a href="{{ url_for('admin.logout') }}">Odhlásit se</a>
 
+<!-- Odkaz na odhlášení -->
+<a href="{{ url_for('admin.logout') }}" class="btn-logout">🚪 Odhlásit se</a>
+
+<!-- Sekce pro správu produktů -->
 <h3>Správa produktů</h3>
-<a href="{{ url_for('admin.add_product') }}">➕ Přidat nový produkt</a>
+<a href="{{ url_for('admin.add_product') }}" class="btn-add-product"
+  >➕ Přidat nový produkt</a
+>
 
-<table border="1">
-  <tr>
-    <th>ID</th>
-    <th>Název</th>
-    <th>Cena</th>
-    <th>Akce</th>
-  </tr>
-  {% for product in products %}
-  <tr>
-    <td>{{ product.position_id }}</td>
-    <td>{{ product.name }}</td>
-    <td>{{ product.price }} Kč</td>
-    <td>
-      <a href="{{ url_for('admin.edit_product', product_id=product.id) }}"
-        >✏️ Upravit</a
-      >
-
-      <form
-        method="POST"
-        action="{{ url_for('admin.delete_product', product_id=product.id) }}"
-        style="display: inline"
-      >
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-        <!-- CSRF token -->
-        <button
-          type="submit"
-          onclick="return confirm('Opravdu chcete smazat tento produkt?')"
+<!-- Tabulka produktů -->
+<table class="admin-table">
+  <thead>
+    <tr>
+      <th>Obrázek</th>
+      <th>ID</th>
+      <th>Název</th>
+      <th>Cena</th>
+      <th>Akce</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for product in products %}
+    <tr>
+      <td>
+        {% if product.image_filename %}
+        <img
+          src="{{ url_for('static', filename='uploads/' ~ product.image_filename) }}"
+          alt="{{ product.name }}"
+          class="product-thumbnail"
+        />
+        {% else %}
+        <span>Žádný obrázek</span>
+        {% endif %}
+      </td>
+      <td>{{ product.position_id }}</td>
+      <td>{{ product.name }}</td>
+      <td>{{ product.price }} Kč</td>
+      <td class="actions">
+        <a
+          href="{{ url_for('admin.edit_product', product_id=product.id) }}"
+          class="btn-edit"
+          >✏️ Upravit</a
         >
-          🗑️ Smazat
-        </button>
-      </form>
-    </td>
-  </tr>
-  {% endfor %}
+        <form
+          method="POST"
+          action="{{ url_for('admin.delete_product', product_id=product.id) }}"
+          class="delete-form"
+        >
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+          <button
+            type="submit"
+            class="btn-delete"
+            onclick="return confirm('Opravdu chcete smazat tento produkt?')"
+          >
+            🗑️ Smazat
+          </button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
 </table>
+
+<!-- Styly -->
+<style>
+  h2,
+  h3 {
+    color: #333;
+    text-align: center;
+    margin-bottom: 20px;
+  }
+
+  .btn-logout,
+  .btn-add-product {
+    display: inline-block;
+    margin-bottom: 20px;
+    padding: 10px 15px;
+    background-color: #dc3545;
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+  }
+
+  .btn-add-product {
+    background-color: #28a745;
+  }
+
+  .btn-logout:hover,
+  .btn-add-product:hover {
+    opacity: 0.9;
+  }
+
+  .admin-table {
+    width: 66%; /* Zmenšení šířky tabulky na 2/3 */
+    border-collapse: collapse;
+    margin: 0 auto; /* Centrovaní tabulky */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .admin-table th,
+  .admin-table td {
+    border: 1px solid #ddd;
+    padding: 10px; /* Menší padding pro kompaktní vzhled */
+    text-align: center;
+  }
+
+  .admin-table th {
+    background-color: #f4f4f4;
+    color: #333;
+  }
+
+  .product-thumbnail {
+    width: 40px; /* Menší obrázky pro lepší přehlednost */
+    height: auto;
+    border-radius: 5px;
+  }
+
+  .actions a,
+  .actions button {
+    margin: 3px;
+    padding: 5px 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    text-decoration: none;
+  }
+
+  .btn-edit {
+    background-color: #007bff;
+    color: white;
+  }
+
+  .btn-edit:hover {
+    background-color: #0056b3;
+  }
+
+  .btn-delete {
+    background-color: #dc3545;
+    color: white;
+  }
+
+  .btn-delete:hover {
+    background-color: #a71d2a;
+  }
+
+  .delete-form {
+    display: inline;
+  }
+</style>
+
 {% endblock %}

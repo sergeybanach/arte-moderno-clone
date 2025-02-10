@@ -1,46 +1,196 @@
 {% extends "layout.html" %} {% block title %}Košík{% endblock %} {% block
 content %}
-<h1>Váš košík</h1>
+<div class="cart-wrapper">
+  <h1>Váš košík</h1>
 
-<div class="cart-container">
-  {% if cart_items %}
-  <table>
-    <thead>
-      <tr>
-        <th>Produkt</th>
-        <th>Cena za kus</th>
-        <th>Množství</th>
-        <th>Celková cena</th>
-        <th>Akce</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for item in cart_items %}
-      <tr class="cart-item-row" data-product-id="{{ item.product.id }}">
-        <td>{{ item.product.name }}</td>
-        <td>{{ item.product.price }} Kč</td>
-        <td>{{ item.quantity }}</td>
-        <td>{{ item.product.price * item.quantity }} Kč</td>
-        <td>
-          <button
-            class="remove-from-cart"
-            data-product-id="{{ item.product.id }}"
-          >
-            Odebrat
-          </button>
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+  <div class="cart-container">
+    {% if cart_items %}
+    <table class="cart-table">
+      <thead>
+        <tr>
+          <th>Obrázek</th>
+          <th>Produkt</th>
+          <th>Cena za kus</th>
+          <th>Množství</th>
+          <th>Celková cena</th>
+          <th>Akce</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in cart_items %}
+        <tr class="cart-item-row" data-product-id="{{ item.product.id }}">
+          <td class="image-cell">
+            {% if item.product.image_filename %}
+            <div class="image-container">
+              <img
+                src="{{ url_for('static', filename='uploads/' ~ item.product.image_filename) }}"
+                alt="{{ item.product.name }}"
+                class="product-thumbnail"
+              />
+            </div>
+            {% else %}
+            <div class="image-container no-image">
+              <span>Žádný obrázek</span>
+            </div>
+            {% endif %}
+          </td>
+          <td>{{ item.product.name }}</td>
+          <td>{{ item.product.price }} Kč</td>
+          <td>{{ item.quantity }}</td>
+          <td>{{ item.product.price * item.quantity }} Kč</td>
+          <td>
+            <button
+              class="remove-from-cart btn-delete"
+              data-product-id="{{ item.product.id }}"
+            >
+              🗑️ Odebrat
+            </button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
 
-  <h2>Celkem: {{ total_price }} Kč</h2>
-  {% else %}
-  <p>Váš košík je prázdný.</p>
-  {% endif %}
+    <div class="cart-summary">
+      <h2>Celkem: {{ total_price }} Kč</h2>
+      <a href="{{ url_for('views.galerie') }}" class="btn-continue"
+        >Pokračovat v nakupování</a
+      >
+    </div>
+    {% else %}
+    <div class="empty-cart">
+      <p>Váš košík je prázdný.</p>
+      <a href="{{ url_for('views.galerie') }}" class="btn-continue"
+        >Přejít do galerie</a
+      >
+    </div>
+    {% endif %}
+  </div>
 </div>
 
-<a href="{{ url_for('views.galerie') }}">Pokračovat v nakupování</a>
+<style>
+  .cart-wrapper {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+
+  h1 {
+    color: #333;
+    text-align: center;
+    margin-bottom: 20px;
+  }
+
+  .cart-container {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+  }
+
+  .cart-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+  }
+
+  .cart-table th,
+  .cart-table td {
+    border: 1px solid #ddd;
+    padding: 12px;
+    text-align: center;
+  }
+
+  .cart-table th {
+    background-color: #f4f4f4;
+    color: #333;
+    font-weight: 600;
+  }
+
+  /* Styly pro obrázky */
+  .image-cell {
+    width: 60px;
+    height: 60px;
+    padding: 4px !important;
+  }
+
+  .image-container {
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .no-image {
+    background-color: #e9ecef;
+    color: #6c757d;
+    font-size: 0.8em;
+  }
+
+  .product-thumbnail {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    display: block;
+  }
+
+  /* Tlačítka a akce */
+  .btn-delete {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+
+  .btn-delete:hover {
+    background-color: #c82333;
+  }
+
+  .cart-summary {
+    text-align: right;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 2px solid #eee;
+  }
+
+  .cart-summary h2 {
+    color: #333;
+    margin-bottom: 15px;
+  }
+
+  .btn-continue {
+    display: inline-block;
+    background-color: #28a745;
+    color: white;
+    padding: 10px 20px;
+    text-decoration: none;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+  }
+
+  .btn-continue:hover {
+    background-color: #218838;
+  }
+
+  .empty-cart {
+    text-align: center;
+    padding: 40px 20px;
+  }
+
+  .empty-cart p {
+    color: #666;
+    margin-bottom: 20px;
+    font-size: 1.1em;
+  }
+</style>
 
 <script src="{{ url_for('static', filename='js/cart.js') }}"></script>
 {% endblock %}

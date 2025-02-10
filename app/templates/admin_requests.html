@@ -1,0 +1,24 @@
+{% extends "layout.html" %} {% block title %}Požadavky{% endblock %} {% block
+content %}
+<h2>📩 Požadavky</h2>
+<table class="admin-table">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Uživatel</th>
+      <th>Popis</th>
+      <th>Datum</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for request in requests %}
+    <tr>
+      <td>{{ request.id }}</td>
+      <td>{{ request.user.username }}</td>
+      <td>{{ request.description }}</td>
+      <td>{{ request.created_at.strftime('%d.%m.%Y') }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

@@ -1,0 +1,32 @@
+{% extends "layout.html" %} {% block title %}Objednávky{% endblock %} {% block
+content %}
+<h2>🛒 Objednávky</h2>
+<table class="admin-table">
+  <thead>
+    <tr>
+      <th>ID Objednávky</th>
+      <th>Uživatel</th>
+      <th>Produkty</th>
+      <th>Celková cena</th>
+      <th>Datum</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for order in orders %}
+    <tr>
+      <td>{{ order.id }}</td>
+      <td>{{ order.user.username }}</td>
+      <td>
+        <ul>
+          {% for item in order.items %}
+          <li>{{ item.product.name }} ({{ item.quantity }} ks)</li>
+          {% endfor %}
+        </ul>
+      </td>
+      <td>{{ order.total_price }} Kč</td>
+      <td>{{ order.created_at.strftime('%d.%m.%Y') }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
