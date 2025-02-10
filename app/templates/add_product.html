@@ -4,7 +4,7 @@
   enctype="multipart/form-data"
 >
   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-  <!-- CSRF token -->
+
   <label for="position_id">ID pozice:</label>
   <input
     type="number"
@@ -25,6 +25,9 @@
     required
   /><br /><br />
 
+  <label for="stock">Počet kusů na skladě:</label>
+  <input type="number" name="stock" id="stock" required /><br /><br />
+
   <label for="description">Popis:</label><br />
   <textarea name="description" id="description" rows="4"></textarea><br /><br />
 
@@ -34,7 +37,6 @@
   <button type="submit">Přidat produkt</button>
 </form>
 
-<!-- 🆕 Přidáváme tlačítko zpět na dashboard -->
 <a href="{{ url_for('admin.dashboard') }}">
   <button>⬅️ Zpět na admin panel</button>
 </a>

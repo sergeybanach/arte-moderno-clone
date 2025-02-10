@@ -1,37 +1,7 @@
 // Načtení CSRF tokenu z meta tagu
 const csrfToken = document
   .querySelector('meta[name="csrf-token"]')
-  .getAttribute("content");
-
-// Přidání event listeneru na všechna tlačítka "Koupit"
-document.querySelectorAll(".buy-button").forEach((button) => {
-  button.addEventListener("click", function () {
-    const productId = this.dataset.productId; // Načtení ID produktu
-
-    fetch("/cart/add", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRFToken": csrfToken, // Ochrana proti CSRF
-      },
-      body: JSON.stringify({ product_id: productId }), // Odeslání ID produktu
-    })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error("Chyba při přidávání do košíku.");
-        }
-        return response.json();
-      })
-      .then((data) => {
-        alert(data.message); // Zobrazení zprávy o úspěchu
-        updateCartCount(); // Aktualizace počtu položek v košíku
-      })
-      .catch((error) => {
-        console.error("Chyba:", error);
-        alert("Došlo k chybě při přidávání do košíku.");
-      });
-  });
-});
+  ?.getAttribute("content");
 
 // Funkce pro aktualizaci počtu položek v košíku v navbaru
 function updateCartCount() {
@@ -43,24 +13,17 @@ function updateCartCount() {
   })
     .then((response) => response.json())
     .then((data) => {
-      document.getElementById("cart-count").innerText = data.cart_item_count; // Aktualizace počtu v navbaru
-    });
-}
-// Funkce pro aktualizaci počtu položek v košíku
-function updateCartCount() {
-  fetch("/cart/count", {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  })
-    .then((response) => response.json())
-    .then((data) => {
-      document.getElementById("cart-count").innerText = data.cart_item_count;
-    });
+      const cartCountElement = document.getElementById("cart-count");
+      if (cartCountElement) {
+        cartCountElement.innerText = data.cart_item_count;
+      }
+    })
+    .catch((error) =>
+      console.error("Chyba při aktualizaci počtu položek:", error)
+    );
 }
 
-// Přidání položky do košíku
+// Přidání produktu do košíku s kontrolou dostupnosti
 document.querySelectorAll(".buy-button").forEach((button) => {
   button.addEventListener("click", function () {
     const productId = this.dataset.productId;
@@ -69,19 +32,18 @@ document.querySelectorAll(".buy-button").forEach((button) => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "X-CSRFToken": csrfToken,
+        ...(csrfToken && { "X-CSRFToken": csrfToken }),
       },
       body: JSON.stringify({ product_id: productId }),
     })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error("Chyba při přidávání do košíku.");
-        }
-        return response.json();
-      })
+      .then((response) => response.json())
       .then((data) => {
-        alert(data.message);
-        updateCartCount(); // Okamžitá aktualizace počtu položek
+        if (data.error) {
+          alert(data.error); // Zobrazení chyby, pokud není produkt skladem
+        } else {
+          alert(data.message); // Zobrazení zprávy o úspěšném přidání
+          updateCartCount(); // Aktualizace počtu položek v košíku
+        }
       })
       .catch((error) => {
         console.error("Chyba:", error);
@@ -89,3 +51,45 @@ document.querySelectorAll(".buy-button").forEach((button) => {
       });
   });
 });
+
+// Odebrání produktu z košíku
+document.querySelectorAll(".remove-from-cart").forEach((button) => {
+  button.addEventListener("click", function () {
+    const productId = this.dataset.productId;
+
+    fetch("/cart/remove", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(csrfToken && { "X-CSRFToken": csrfToken }),
+      },
+      body: JSON.stringify({ product_id: productId }),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        alert(data.message);
+        updateCartCount(); // Aktualizace počtu položek v navbaru
+
+        const productRow = document.querySelector(
+          `tr[data-product-id="${productId}"]`
+        );
+        if (productRow) {
+          productRow.remove();
+        }
+
+        // Zkontrolovat, zda košík zůstal prázdný
+        const remainingItems = document.querySelectorAll(".cart-item-row");
+        if (remainingItems.length === 0) {
+          document.querySelector(".cart-container").innerHTML =
+            "<p>Váš košík je prázdný.</p>";
+        }
+      })
+      .catch((error) => {
+        console.error("Chyba:", error);
+        alert("Došlo k chybě při odebírání z košíku.");
+      });
+  });
+});
+
+// Automatická aktualizace počtu položek při načtení stránky
+document.addEventListener("DOMContentLoaded", updateCartCount);

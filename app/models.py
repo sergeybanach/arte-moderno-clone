@@ -35,6 +35,8 @@ class Product(db.Model):
     description = db.Column(db.Text, nullable=True)
     price = db.Column(db.Float, nullable=False)
     image_filename = db.Column(db.String(300), nullable=True)  # Název souboru obrázku
+    stock = db.Column(db.Integer, nullable=False, default=0)
+  # Přidáno pole pro sklad
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def get_image_url(self):
@@ -49,13 +51,12 @@ class Product(db.Model):
 from app import db
 
 class CartItem(db.Model):
-    """Tabulka pro položky v košíku"""
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)
-    quantity = db.Column(db.Integer, nullable=False, default=1)
+    product_id = db.Column(db.Integer, db.ForeignKey('product.id', ondelete="CASCADE"), nullable=False)
+    quantity = db.Column(db.Integer, default=1, nullable=False)
 
-    product = db.relationship('Product', backref=db.backref('cart_items', lazy=True))
+    product = db.relationship('Product', backref=db.backref('cart_items', cascade='all, delete'))
 
     def __repr__(self):
         return f"<CartItem User {self.user_id}, Product {self.product_id}, Qty {self.quantity}>"

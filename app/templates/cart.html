@@ -2,33 +2,45 @@
 content %}
 <h1>Váš košík</h1>
 
-{% if cart_items %}
-<table>
-  <thead>
-    <tr>
-      <th>Produkt</th>
-      <th>Cena za kus</th>
-      <th>Množství</th>
-      <th>Celková cena</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for item in cart_items %}
-    <tr>
-      <td>{{ item.product.name }}</td>
-      <td>{{ item.product.price }} Kč</td>
-      <td>{{ item.quantity }}</td>
-      <td>{{ item.product.price * item.quantity }} Kč</td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
+<div class="cart-container">
+  {% if cart_items %}
+  <table>
+    <thead>
+      <tr>
+        <th>Produkt</th>
+        <th>Cena za kus</th>
+        <th>Množství</th>
+        <th>Celková cena</th>
+        <th>Akce</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in cart_items %}
+      <tr class="cart-item-row" data-product-id="{{ item.product.id }}">
+        <td>{{ item.product.name }}</td>
+        <td>{{ item.product.price }} Kč</td>
+        <td>{{ item.quantity }}</td>
+        <td>{{ item.product.price * item.quantity }} Kč</td>
+        <td>
+          <button
+            class="remove-from-cart"
+            data-product-id="{{ item.product.id }}"
+          >
+            Odebrat
+          </button>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
 
-<h2>Celkem: {{ total_price }} Kč</h2>
-
-{% else %}
-<p>Váš košík je prázdný.</p>
-{% endif %}
+  <h2>Celkem: {{ total_price }} Kč</h2>
+  {% else %}
+  <p>Váš košík je prázdný.</p>
+  {% endif %}
+</div>
 
 <a href="{{ url_for('views.galerie') }}">Pokračovat v nakupování</a>
+
+<script src="{{ url_for('static', filename='js/cart.js') }}"></script>
 {% endblock %}

@@ -1,10 +1,7 @@
-{% extends "layout.html" %} {% block title %}Galerie{% endblock %} {% block
-styles %}
-<link
-  rel="stylesheet"
-  href="{{ url_for('static', filename='css/galerie.css') }}"
-/>
-{% endblock %} {% block content %}
+{% extends "layout.html" %}
+{% block title %}Galerie{% endblock %}
+
+{% block content %}
 <h1 class="gallery-heading">Galerie</h1>
 
 <div class="gallery-container">
@@ -12,16 +9,21 @@ styles %}
   <div class="gallery-item {% if loop.index % 2 == 0 %}reverse{% endif %}">
     <div class="gallery-image">
       <div class="image-frame">
-        <img src="{{ product.get_image_url() }}" alt="{{ product.name }}" />
+        <img src="{{ product.get_image_url() }}" alt="{{ product.name }}">
       </div>
     </div>
     <div class="gallery-info">
       <h3>{{ product.name }}</h3>
-      <p class="gallery-description">
-        {{ product.description or 'Žádný popis není dostupný' }}
-      </p>
+      <p class="gallery-description">{{ product.description or 'Žádný popis není dostupný' }}</p>
       <p class="gallery-price"><strong>{{ product.price }} Kč</strong></p>
-      <button class="buy-button" data-product-id="{{ product.id }}">
+      <p class="gallery-stock">
+        {% if product.stock > 0 %}
+          <strong>Skladem: {{ product.stock }} kus(ů)</strong>
+        {% else %}
+          <strong style="color: red;">Vyprodáno</strong>
+        {% endif %}
+      </p>
+      <button class="buy-button" data-product-id="{{ product.id }}" {% if product.stock == 0 %}disabled{% endif %}>
         🛒 Koupit
       </button>
     </div>
@@ -32,5 +34,4 @@ styles %}
 </div>
 
 <script src="{{ url_for('static', filename='js/cart.js') }}"></script>
-<!-- Připojení JS -->
 {% endblock %}

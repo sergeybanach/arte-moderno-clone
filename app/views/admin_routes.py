@@ -4,10 +4,10 @@ from werkzeug.utils import secure_filename
 from functools import wraps
 from app.models import Product
 from app import db
-from flask_login import current_user
+from flask_login import current_user, login_user, login_required
 from app.models import User  # Import modelu User
 from app import bcrypt       # Import bcrypt pro ověřování hesla
-
+from app.models import CartItem
 
 admin = Blueprint("admin", __name__, url_prefix="/admin")
 
@@ -70,36 +70,62 @@ def dashboard():
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in current_app.config['ALLOWED_EXTENSIONS']
 
-@admin.route("/add_product", methods=["GET", "POST"])
+@admin.route('/add_product', methods=['GET', 'POST'])
 @admin_required
 def add_product():
-    if request.method == "POST":
-        position_id = request.form.get("position_id")
-        name = request.form.get("name")
-        price = request.form.get("price")
-        description = request.form.get("description")
-        image = request.files.get("image")
+    if request.method == 'POST':
+        position_id = request.form.get('position_id')
+        name = request.form.get('name')
+        description = request.form.get('description')
+        price = request.form.get('price')
+        stock = request.form.get('stock')
+        image = request.files.get('image')
 
-        existing_product = Product.query.filter_by(position_id=position_id).first()
-        if existing_product:
-            flash("Pod tímto ID už existuje produkt!", "warning")
-            return redirect(url_for("admin.edit_product", product_id=existing_product.id))
+        # Debugging - Výpis všech hodnot pro ověření
+        print(f"DEBUG - Pozice ID: {position_id}")
+        print(f"DEBUG - Název: {name}")
+        print(f"DEBUG - Cena: {price}")
+        print(f"DEBUG - Sklad: {stock}")
+        print(f"DEBUG - Obrázek: {image.filename if image else 'Žádný obrázek'}")
 
-        image_filename = None
-        if image and allowed_file(image.filename):
-            filename = secure_filename(image.filename)
-            image_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
-            image.save(image_path)
-            image_filename = filename
+        # Kontrola povinných polí
+        if not (position_id and name and price and stock):
+            flash('Všechna povinná pole (pozice ID, název, cena, sklad) musí být vyplněna.', 'error')
+            return redirect(url_for('admin.add_product'))
 
-        new_product = Product(position_id=position_id, name=name, price=price, description=description, image_filename=image_filename)
-        db.session.add(new_product)
-        db.session.commit()
+        try:
+            # Vytvoření nového produktu
+            new_product = Product(
+                position_id=int(position_id),
+                name=name,
+                description=description,
+                price=float(price),
+                stock=int(stock)
+            )
 
-        flash("Produkt byl úspěšně přidán!", "success")
-        return redirect(url_for("admin.dashboard"))
+            # Zpracování obrázku
+            if image:
+                image_filename = secure_filename(image.filename)
+                image_path = os.path.join('app/static/uploads', image_filename)
+                image.save(image_path)
+                new_product.image_filename = image_filename
 
-    return render_template("add_product.html")
+            # Uložení produktu do databáze
+            db.session.add(new_product)
+            db.session.commit()
+
+            flash('Produkt byl úspěšně přidán.', 'success')
+            return redirect(url_for('admin.dashboard'))
+
+        except Exception as e:
+            print(f"CHYBA PŘI UKLÁDÁNÍ PRODUKTU: {e}")
+            db.session.rollback()
+            flash('Chyba při nahrávání produktu.', 'error')
+            return redirect(url_for('admin.add_product'))
+
+    return render_template('add_product.html')
+
+
 
 @admin.route("/edit_product/<int:product_id>", methods=["GET", "POST"])
 @admin_required
@@ -142,5 +168,13 @@ def delete_product(product_id):
     product = Product.query.get_or_404(product_id)
     db.session.delete(product)
     db.session.commit()
+
+    # Odstranění osamocených položek z košíku
+    orphaned_items = CartItem.query.filter(~CartItem.product.has()).all()
+    for item in orphaned_items:
+        db.session.delete(item)
+    db.session.commit()
+
     flash("Produkt byl úspěšně smazán!", "success")
     return redirect(url_for("admin.dashboard"))
+
