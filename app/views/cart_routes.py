@@ -1,9 +1,13 @@
-from flask import Blueprint, request, jsonify, render_template
+from flask import Blueprint, request, jsonify, render_template, session
 from flask_login import login_required, current_user
 from app.models import Product, CartItem
 from app import db
 
 cart = Blueprint("cart", __name__, url_prefix="/cart")
+
+def update_cart_count():
+    cart_items = CartItem.query.filter_by(user_id=current_user.id).all()
+    session['cart_item_count'] = sum(item.quantity for item in cart_items)
 
 @cart.route('/add', methods=['POST'])
 @login_required
@@ -18,19 +22,19 @@ def add_to_cart():
     if not product:
         return jsonify({'message': 'Produkt neexistuje.'}), 404
 
-    # Zkontroluj, zda už produkt není v košíku
     existing_item = CartItem.query.filter_by(user_id=current_user.id, product_id=product_id).first()
     if existing_item:
-        existing_item.quantity += 1  # Zvyšte množství, pokud už produkt existuje
+        existing_item.quantity += 1
     else:
         new_item = CartItem(user_id=current_user.id, product_id=product_id, quantity=1)
         db.session.add(new_item)
 
     db.session.commit()
+    update_cart_count()  # Aktualizace počtu položek v session
 
     return jsonify({'message': f'Produkt {product.name} byl přidán do košíku.'}), 200
 
-@cart.route("/remove", methods=["POST"])
+@cart.route('/remove', methods=['POST'])
 @login_required
 def remove_from_cart():
     data = request.get_json()
@@ -42,6 +46,8 @@ def remove_from_cart():
 
     db.session.delete(cart_item)
     db.session.commit()
+    update_cart_count()  # Aktualizace počtu položek v session
+
     return jsonify({"message": "Produkt odebrán z košíku"}), 200
 
 @cart.route('/view', methods=['GET'])

@@ -14,23 +14,17 @@
     <a href="{{ url_for('views.kontakt') }}" class="nav-link">Kontakt</a>
 
     {% if current_user.is_authenticated %} {% if current_user.role == 'admin' %}
-    <!-- Admin Panel místo košíku -->
-    <a href="{{ url_for('admin.dashboard') }}" class="nav-link"
-      >🔧 Admin Panel</a
-    >
+    <a href="{{ url_for('admin.dashboard') }}" class="nav-link">Admin Panel</a>
     {% else %}
-    <!-- Ikona košíku pro běžného uživatele -->
+    <!-- Ikona košíku pro běžné uživatele -->
     <a href="{{ url_for('cart.view_cart') }}" class="nav-link cart-icon">
-      🛒 <span id="cart-count">{{ session.get('cart_item_count', 0) }}</span>
+      🛒 <span id="cart-count">{{ cart_item_count }}</span>
     </a>
     {% endif %}
-
-    <!-- Tlačítko pro odhlášení -->
-    <a href="{{ url_for('views.logout') }}" class="nav-link">🚪 Odhlásit se</a>
+    <a href="{{ url_for('views.logout') }}" class="nav-link">Odhlásit se</a>
     {% else %}
-    <!-- Přihlášení a registrace pro neautorizované uživatele -->
-    <a href="{{ url_for('views.register') }}" class="nav-link">📝 Registrace</a>
-    <a href="{{ url_for('views.login') }}" class="nav-link">🔑 Přihlášení</a>
+    <a href="{{ url_for('views.register') }}" class="nav-link">Registrace</a>
+    <a href="{{ url_for('views.login') }}" class="nav-link">Přihlášení</a>
     {% endif %}
   </div>
 </nav>
