@@ -1,0 +1,3017 @@
+### bundleFiles.js ###
+const fs = require('node:fs/promises');
+const path = require('node:path');
+
+// Configuration object for customization
+const config = {
+  rootDir: process.cwd(),
+  outputFile: 'bundled-project.txt',
+  includeExtensions: [
+    '.js', '.jsx', '.css', '.html', '.py', '.json', '.txt', '.md', '.ini', '.mako', // Text-based extensions
+  ],
+  excludeDirs: [
+    'node_modules',
+    'venv',           // Virtual environment
+    '__pycache__',    // Python bytecode cache
+    '.git',          // Git repository
+    '.vscode',       // VS Code settings
+    'instance',      // Flask instance folder
+    // 'migrations',    // Flask-Migrate migrations (optional: remove if you want migration scripts)
+  ],
+  excludeFiles: [
+    // '.env',           // Environment files with secrets
+    // '.gitignore',
+    'bundled-project.txt', // Prevent self-inclusion
+    'app.db',         // SQLite database
+    'arte_moderno.db', // Another SQLite database
+    'files-tree.txt', // Exclude other generated outputs
+    'full-list.txt',
+    'list.txt',
+  ],
+  excludeBinaryExtensions: [
+    '.jpg', '.jpeg', '.png', '.gif', '.webp', // Image files
+    '.db',          // Database files
+    '.svg',         // SVG can be text, but often treated as binary in this context
+  ],
+};
+
+// Check if a file should be included
+const shouldIncludeFile = (filePath) => {
+  const ext = path.extname(filePath).toLowerCase();
+  const baseName = path.basename(filePath);
+
+  // Exclude if it's in excludeFiles or has a binary extension
+  if (config.excludeFiles.includes(baseName) || config.excludeBinaryExtensions.includes(ext)) {
+    return false;
+  }
+
+  // Include only if it has an allowed text-based extension
+  return config.includeExtensions.includes(ext);
+};
+
+// Check if a directory should be traversed
+const shouldIncludeDir = (dirPath) => {
+  const baseName = path.basename(dirPath);
+  return !config.excludeDirs.includes(baseName);
+};
+
+// Recursive function to collect files with content
+async function collectFiles(dir) {
+  const results = [];
+  try {
+    const entries = await fs.readdir(dir, { withFileTypes: true });
+
+    // Process entries in parallel for performance
+    await Promise.all(
+      entries.map(async (entry) => {
+        const fullPath = path.join(dir, entry.name);
+        if (entry.isDirectory() && shouldIncludeDir(fullPath)) {
+          const subFiles = await collectFiles(fullPath);
+          results.push(...subFiles);
+        } else if (entry.isFile() && shouldIncludeFile(fullPath)) {
+          try {
+            const content = await fs.readFile(fullPath, 'utf8');
+            results.push({
+              filePath: path.relative(config.rootDir, fullPath),
+              content: content.trimEnd(), // Trim content to save memory
+            });
+          } catch (err) {
+            console.error(`Error reading file ${fullPath}:`, err);
+          }
+        }
+      })
+    );
+  } catch (err) {
+    console.error(`Error reading directory ${dir}:`, err);
+  }
+  return results;
+}
+
+// Main function to bundle files
+async function bundleProject() {
+  console.log('Collecting files...');
+  const files = await collectFiles(config.rootDir);
+
+  if (files.length === 0) {
+    console.log('No files found to bundle.');
+    return;
+  }
+
+  console.log(`Found ${files.length} files. Bundling into ${config.outputFile}...`);
+
+  // Use a stream for writing large files efficiently
+  const outputPath = path.join(config.rootDir, config.outputFile);
+  const stream = (await fs.open(outputPath, 'w')).createWriteStream();
+
+  for (const file of files) {
+    stream.write(`### ${file.filePath} ###\n${file.content}\n\n`);
+  }
+
+  stream.end();
+  console.log(`Successfully bundled project into ${config.outputFile}`);
+}
+
+// Error handling wrapper
+(async () => {
+  try {
+    await bundleProject();
+  } catch (err) {
+    console.error('Error bundling project:', err);
+    process.exit(1);
+  }
+})();
+
+### config.py ###
+import os
+
+class Config:
+    SECRET_KEY = os.getenv('SECRET_KEY', 'arte_moderno')
+    WTF_CSRF_SECRET_KEY = os.getenv('WTF_CSRF_SECRET_KEY', 'c0ea893fc51c8912e8f18bbde18cbdd78fe05014f70a2dd94a775a7ed05eb2ce')
+    WTF_CSRF_ENABLED = True
+    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL', 'sqlite:///arte_moderno.db')
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
+    UPLOAD_FOLDER = os.path.join(os.getcwd(), 'app', 'static', 'uploads')
+    ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+
+    # Admin Credentials
+    ADMIN_USERNAME = os.getenv('ADMIN_USERNAME', 'admin')
+    ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD', 'arte2024')
+
+    # Nastavení pro Flask-Mail
+    MAIL_SERVER = 'smtp.gmail.com'  # Gmail SMTP
+    MAIL_PORT = 587                 # TLS port
+    MAIL_USE_TLS = True
+    MAIL_USERNAME = 'artemodernoblaha@gmail.com'  # Váš e-mail
+    MAIL_PASSWORD = 'qxunfbtnyvefainm'  # App Password pro Gmail
+
+### __requirements.txt ###
+alembic==1.14.1
+bcrypt==4.2.1
+blinker==1.9.0
+certifi==2024.12.14
+charset-normalizer==3.4.1
+click==8.1.8
+colorama==0.4.6
+filelock==3.13.1
+Flask==3.1.0
+Flask-Bcrypt==1.0.1
+Flask-Login==0.6.3
+Flask-Mail==0.10.0
+Flask-Migrate==4.1.0
+Flask-SQLAlchemy==3.1.1
+Flask-WTF==1.2.2
+fsspec==2024.6.1
+greenlet==3.1.1
+gunicorn==23.0.0
+huggingface-hub==0.28.0
+idna==3.10
+itsdangerous==2.2.0
+Jinja2==3.1.5
+Mako==1.3.8
+MarkupSafe==3.0.2
+mpmath==1.3.0
+networkx==3.3
+numpy==2.1.2
+Pillow==11.0.0
+PyYAML==6.0.2
+regex==2024.11.6
+requests==2.32.3
+safetensors==0.5.2
+setuptools==70.2.0
+SQLAlchemy==2.0.37
+sympy==1.13.1
+tokenizers==0.21.0
+torch==2.5.1
+
+### run.py ###
+from app import create_app
+
+app = create_app()
+
+if __name__ == '__main__':
+    app.run(debug=True)
+
+### file-list.txt ###
+__requirements.txt
+app/__init__.py
+app/check_constraints.py
+app/commands.py
+app/models.py
+app/static/JS/cart.js
+app/static/css/admin_dashboard.css
+app/static/css/galerie.css
+app/static/css/kontakt.css
+app/static/css/login.css
+app/static/css/main.css
+app/static/css/register.css
+app/static/images/Bowie.jpg
+app/static/images/IMG_1.jpeg
+app/static/images/IMG_2.jpeg
+app/static/images/IMG_3.jpeg
+app/static/images/IMG_4.jpeg
+app/static/images/Monet_1.jpg
+app/static/images/nevim.jpg
+app/static/images/vangogh.jpg
+app/static/images/vangogh_1.jpg
+app/static/logo/Logo_1_arteModerno.webp
+app/static/logo/Logo_2_arteModerno.webp
+app/static/logo/Logo_3_arteModerno.webp
+app/static/logo/Logo_3_svg.svg
+app/static/logo/Logo_4_svg.svg
+app/static/logo/facebook.svg
+app/static/logo/skill-icons_instagram.svg
+app/static/logo/x.svg
+app/static/uploads/Bowie.jpg
+app/static/uploads/IMG_1.jpeg
+app/static/uploads/IMG_2.jpeg
+app/static/uploads/IMG_4.jpeg
+app/static/uploads/Monet_1.jpg
+app/static/uploads/nevim.jpg
+app/static/uploads/vangogh.jpg
+app/static/uploads/vangogh_1.jpg
+app/templates/add_product.html
+app/templates/admin.html
+app/templates/admin_dashboard.html
+app/templates/admin_orders.html
+app/templates/admin_requests.html
+app/templates/admin_users.html
+app/templates/cart.html
+app/templates/edit_product.html
+app/templates/galerie.html
+app/templates/home.html
+app/templates/kontakt.html
+app/templates/layout.html
+app/templates/list_inquiries.html
+app/templates/login.html
+app/templates/navbar.html
+app/templates/register.html
+app/views/admin_routes.py
+app/views/cart_routes.py
+app/views/routes.py
+bundleFiles.js
+config.py
+et --hard 6ac28cb
+listFiles.js
+run.py
+
+### listFiles.js ###
+const fs = require('node:fs/promises');
+const path = require('node:path');
+
+// Configuration object for exclusions
+const config = {
+  rootDir: process.cwd(), // Current working directory
+  excludeDirs: [
+    'venv',           // Virtual environment
+    '__pycache__',    // Python bytecode cache
+    '.git',          // Git repository
+    '.vscode',       // VS Code settings
+    'node_modules',  // Node.js dependencies (if any)
+    'migrations',    // Flask-Migrate migrations
+    'instance',      // Flask instance folder
+    'static/uploads' // User-uploaded files (optional)
+  ],
+  excludeFiles: [
+    '.gitignore',
+    '.env',
+    '*.db',           // SQLite database files (e.g., app.db, arte_moderno.db)
+    'bundled-project.txt', // Output from your bundleFiles.js
+    'files-tree.txt', // Another potential output file
+    '*.log',          // Log files
+    'requirements.txt' // Optional: exclude if you don’t want it listed
+  ]
+};
+
+// Check if a directory should be traversed
+const shouldIncludeDir = (dirPath) => {
+  const baseName = path.basename(dirPath);
+  return !config.excludeDirs.includes(baseName);
+};
+
+// Check if a file should be included (basic wildcard support)
+const shouldIncludeFile = (filePath) => {
+  const baseName = path.basename(filePath);
+  return !config.excludeFiles.some(pattern => {
+    if (pattern.includes('*')) {
+      const regex = new RegExp('^' + pattern.replace(/\*/g, '.*') + '$');
+      return regex.test(baseName);
+    }
+    return pattern === baseName;
+  });
+};
+
+// Recursive function to list files
+async function listFiles(dir) {
+  const fileList = [];
+  try {
+    const entries = await fs.readdir(dir, { withFileTypes: true });
+
+    for (const entry of entries) {
+      const fullPath = path.join(dir, entry.name);
+      const relativePath = path.relative(config.rootDir, fullPath);
+
+      if (entry.isDirectory() && shouldIncludeDir(fullPath)) {
+        const subFiles = await listFiles(fullPath);
+        fileList.push(...subFiles);
+      } else if (entry.isFile() && shouldIncludeFile(fullPath)) {
+        fileList.push(relativePath);
+      }
+    }
+  } catch (err) {
+    console.error(`Error reading directory ${dir}:`, err);
+  }
+  return fileList;
+}
+
+// Main function to execute the listing
+async function generateFileList() {
+  console.log('Generating file list...');
+  const files = await listFiles(config.rootDir);
+
+  if (files.length === 0) {
+    console.log('No files found.');
+    return;
+  }
+
+  // Sort files alphabetically for consistency
+  files.sort();
+
+  // Print the list
+  console.log('\nList of files:');
+  files.forEach(file => console.log(file));
+
+  // Optional: Write to a file
+  const outputPath = path.join(config.rootDir, 'file-list.txt');
+  await fs.writeFile(outputPath, files.join('\n'), 'utf8');
+  console.log(`\nFile list saved to ${outputPath}`);
+}
+
+// Run the script with error handling
+(async () => {
+  try {
+    await generateFileList();
+  } catch (err) {
+    console.error('Error generating file list:', err);
+    process.exit(1);
+  }
+})();
+
+### requirements.txt ###
+flask
+flask-sqlalchemy
+flask-migrate
+flask-mail
+flask-bcrypt
+flask-login
+flask-wtf
+werkzeug
+
+### migrations/alembic.ini ###
+# A generic, single database configuration.
+
+[alembic]
+# template used to generate migration files
+# file_template = %%(rev)s_%%(slug)s
+
+# set to 'true' to run the environment during
+# the 'revision' command, regardless of autogenerate
+# revision_environment = false
+
+
+# Logging configuration
+[loggers]
+keys = root,sqlalchemy,alembic,flask_migrate
+
+[handlers]
+keys = console
+
+[formatters]
+keys = generic
+
+[logger_root]
+level = WARN
+handlers = console
+qualname =
+
+[logger_sqlalchemy]
+level = WARN
+handlers =
+qualname = sqlalchemy.engine
+
+[logger_alembic]
+level = INFO
+handlers =
+qualname = alembic
+
+[logger_flask_migrate]
+level = INFO
+handlers =
+qualname = flask_migrate
+
+[handler_console]
+class = StreamHandler
+args = (sys.stderr,)
+level = NOTSET
+formatter = generic
+
+[formatter_generic]
+format = %(levelname)-5.5s [%(name)s] %(message)s
+datefmt = %H:%M:%S
+
+### migrations/env.py ###
+import logging
+from logging.config import fileConfig
+
+from flask import current_app
+
+from alembic import context
+
+# this is the Alembic Config object, which provides
+# access to the values within the .ini file in use.
+config = context.config
+
+# Interpret the config file for Python logging.
+# This line sets up loggers basically.
+fileConfig(config.config_file_name)
+logger = logging.getLogger('alembic.env')
+
+
+def get_engine():
+    try:
+        # this works with Flask-SQLAlchemy<3 and Alchemical
+        return current_app.extensions['migrate'].db.get_engine()
+    except (TypeError, AttributeError):
+        # this works with Flask-SQLAlchemy>=3
+        return current_app.extensions['migrate'].db.engine
+
+
+def get_engine_url():
+    try:
+        return get_engine().url.render_as_string(hide_password=False).replace(
+            '%', '%%')
+    except AttributeError:
+        return str(get_engine().url).replace('%', '%%')
+
+
+# add your model's MetaData object here
+# for 'autogenerate' support
+# from myapp import mymodel
+# target_metadata = mymodel.Base.metadata
+config.set_main_option('sqlalchemy.url', get_engine_url())
+target_db = current_app.extensions['migrate'].db
+
+# other values from the config, defined by the needs of env.py,
+# can be acquired:
+# my_important_option = config.get_main_option("my_important_option")
+# ... etc.
+
+
+def get_metadata():
+    if hasattr(target_db, 'metadatas'):
+        return target_db.metadatas[None]
+    return target_db.metadata
+
+
+def run_migrations_offline():
+    """Run migrations in 'offline' mode.
+
+    This configures the context with just a URL
+    and not an Engine, though an Engine is acceptable
+    here as well.  By skipping the Engine creation
+    we don't even need a DBAPI to be available.
+
+    Calls to context.execute() here emit the given string to the
+    script output.
+
+    """
+    url = config.get_main_option("sqlalchemy.url")
+    context.configure(
+        url=url, target_metadata=get_metadata(), literal_binds=True
+    )
+
+    with context.begin_transaction():
+        context.run_migrations()
+
+
+def run_migrations_online():
+    """Run migrations in 'online' mode.
+
+    In this scenario we need to create an Engine
+    and associate a connection with the context.
+
+    """
+
+    # this callback is used to prevent an auto-migration from being generated
+    # when there are no changes to the schema
+    # reference: http://alembic.zzzcomputing.com/en/latest/cookbook.html
+    def process_revision_directives(context, revision, directives):
+        if getattr(config.cmd_opts, 'autogenerate', False):
+            script = directives[0]
+            if script.upgrade_ops.is_empty():
+                directives[:] = []
+                logger.info('No changes in schema detected.')
+
+    conf_args = current_app.extensions['migrate'].configure_args
+    if conf_args.get("process_revision_directives") is None:
+        conf_args["process_revision_directives"] = process_revision_directives
+
+    connectable = get_engine()
+
+    with connectable.connect() as connection:
+        context.configure(
+            connection=connection,
+            target_metadata=get_metadata(),
+            **conf_args
+        )
+
+        with context.begin_transaction():
+            context.run_migrations()
+
+
+if context.is_offline_mode():
+    run_migrations_offline()
+else:
+    run_migrations_online()
+
+### migrations/script.py.mako ###
+"""${message}
+
+Revision ID: ${up_revision}
+Revises: ${down_revision | comma,n}
+Create Date: ${create_date}
+
+"""
+from alembic import op
+import sqlalchemy as sa
+${imports if imports else ""}
+
+# revision identifiers, used by Alembic.
+revision = ${repr(up_revision)}
+down_revision = ${repr(down_revision)}
+branch_labels = ${repr(branch_labels)}
+depends_on = ${repr(depends_on)}
+
+
+def upgrade():
+    ${upgrades if upgrades else "pass"}
+
+
+def downgrade():
+    ${downgrades if downgrades else "pass"}
+
+### migrations/versions/16e82a0195cc_add_cartitem_model.py ###
+"""Add CartItem model
+
+Revision ID: 16e82a0195cc
+Revises: 822423b3d2db
+Create Date: 2025-02-08 23:00:59.355649
+
+"""
+from alembic import op
+import sqlalchemy as sa
+
+
+# revision identifiers, used by Alembic.
+revision = '16e82a0195cc'
+down_revision = '822423b3d2db'
+branch_labels = None
+depends_on = None
+
+
+def upgrade():
+    # ### commands auto generated by Alembic - please adjust! ###
+    op.create_table('cart_item',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.Column('product_id', sa.Integer(), nullable=False),
+    sa.Column('quantity', sa.Integer(), nullable=False),
+    sa.ForeignKeyConstraint(['product_id'], ['product.id'], ),
+    sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    # ### end Alembic commands ###
+
+
+def downgrade():
+    # ### commands auto generated by Alembic - please adjust! ###
+    op.drop_table('cart_item')
+    # ### end Alembic commands ###
+
+### migrations/versions/31f4976b90ce_přidání_sloupce_role_do_tabulky_user.py ###
+"""Přidání sloupce role do tabulky user
+
+Revision ID: 31f4976b90ce
+Revises: 16e82a0195cc
+Create Date: 2025-02-08 23:57:02.884961
+
+"""
+from alembic import op
+import sqlalchemy as sa
+
+
+# revision identifiers, used by Alembic.
+revision = '31f4976b90ce'
+down_revision = '16e82a0195cc'
+branch_labels = None
+depends_on = None
+
+
+def upgrade():
+    # ### commands auto generated by Alembic - please adjust! ###
+    def upgrade():
+        with op.batch_alter_table('user', schema=None) as batch_op:
+             batch_op.alter_column('role', server_default=None)
+
+
+    # ### end Alembic commands ###
+
+
+def downgrade():
+    # ### commands auto generated by Alembic - please adjust! ###
+    with op.batch_alter_table('user', schema=None) as batch_op:
+        batch_op.drop_column('role')
+
+    # ### end Alembic commands ###
+
+### migrations/versions/245ea1f5d7a0_přidání_kaskádového_mazání_do_cartitem.py ###
+"""Přidání kaskádového mazání do CartItem
+
+Revision ID: 245ea1f5d7a0
+Revises: f26fccac8667
+Create Date: 2025-02-10 14:33:25.250684
+
+"""
+from alembic import op
+import sqlalchemy as sa
+
+
+# revision identifiers, used by Alembic.
+revision = '245ea1f5d7a0'
+down_revision = 'f26fccac8667'
+branch_labels = None
+depends_on = None
+
+
+def upgrade():
+    # ### commands auto generated by Alembic - please adjust! ###
+    with op.batch_alter_table('cart_item', schema=None) as batch_op:
+        batch_op.drop_constraint(None, type_='foreignkey')
+        batch_op.create_foreign_key(None, 'product', ['product_id'], ['id'], ondelete='CASCADE')
+
+    # ### end Alembic commands ###
+
+
+def downgrade():
+    # ### commands auto generated by Alembic - please adjust! ###
+    with op.batch_alter_table('cart_item', schema=None) as batch_op:
+        batch_op.drop_constraint(None, type_='foreignkey')
+        batch_op.create_foreign_key(None, 'product', ['product_id'], ['id'])
+
+    # ### end Alembic commands ###
+
+### migrations/versions/7b9b025b545a_add_phone_to_user.py ###
+"""Add phone to User
+
+Revision ID: 7b9b025b545a
+Revises: b61a4672f274
+Create Date: 2025-02-11 01:12:09.588048
+
+"""
+from alembic import op
+import sqlalchemy as sa
+
+
+# revision identifiers, used by Alembic.
+revision = '7b9b025b545a'
+down_revision = 'b61a4672f274'
+branch_labels = None
+depends_on = None
+
+
+def upgrade():
+    # ### commands auto generated by Alembic - please adjust! ###
+    with op.batch_alter_table('user', schema=None) as batch_op:
+        batch_op.add_column(sa.Column('phone', sa.String(length=20), nullable=True))
+
+    # ### end Alembic commands ###
+
+
+def downgrade():
+    # ### commands auto generated by Alembic - please adjust! ###
+    with op.batch_alter_table('user', schema=None) as batch_op:
+        batch_op.drop_column('phone')
+
+    # ### end Alembic commands ###
+
+### migrations/versions/7fa04908111a_add_created_at_to_user.py ###
+"""Add created_at to User
+
+Revision ID: 7fa04908111a
+Revises: dd00dd5fd781
+Create Date: 2025-01-29 01:03:19.349165
+
+"""
+from alembic import op
+import sqlalchemy as sa
+
+
+# revision identifiers, used by Alembic.
+revision = '7fa04908111a'
+down_revision = 'dd00dd5fd781'
+branch_labels = None
+depends_on = None
+
+
+def upgrade():
+    # ### commands auto generated by Alembic - please adjust! ###
+    with op.batch_alter_table('user', schema=None) as batch_op:
+        batch_op.add_column(sa.Column('created_at', sa.DateTime(), nullable=True))
+
+    # ### end Alembic commands ###
+
+
+def downgrade():
+    # ### commands auto generated by Alembic - please adjust! ###
+    with op.batch_alter_table('user', schema=None) as batch_op:
+        batch_op.drop_column('created_at')
+
+    # ### end Alembic commands ###
+
+### migrations/versions/822423b3d2db_přidání_tabulky_product.py ###
+"""Přidání tabulky Product
+
+Revision ID: 822423b3d2db
+Revises: 7fa04908111a
+Create Date: 2025-01-31 00:07:11.525603
+
+"""
+from alembic import op
+import sqlalchemy as sa
+
+
+# revision identifiers, used by Alembic.
+revision = '822423b3d2db'
+down_revision = '7fa04908111a'
+branch_labels = None
+depends_on = None
+
+
+def upgrade():
+    # ### commands auto generated by Alembic - please adjust! ###
+    op.create_table('product',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('position_id', sa.Integer(), nullable=False),
+    sa.Column('name', sa.String(length=150), nullable=False),
+    sa.Column('description', sa.Text(), nullable=True),
+    sa.Column('price', sa.Float(), nullable=False),
+    sa.Column('image_filename', sa.String(length=300), nullable=True),
+    sa.Column('created_at', sa.DateTime(), nullable=True),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('position_id')
+    )
+    # ### end Alembic commands ###
+
+
+def downgrade():
+    # ### commands auto generated by Alembic - please adjust! ###
+    op.drop_table('product')
+    # ### end Alembic commands ###
+
+### migrations/versions/d73542a2ed07_initial_migration.py ###
+"""Initial migration
+
+Revision ID: d73542a2ed07
+Revises: 
+Create Date: 2025-01-28 23:45:57.514978
+
+"""
+from alembic import op
+import sqlalchemy as sa
+
+
+# revision identifiers, used by Alembic.
+revision = 'd73542a2ed07'
+down_revision = None
+branch_labels = None
+depends_on = None
+
+
+def upgrade():
+    # ### commands auto generated by Alembic - please adjust! ###
+    op.create_table('user',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('username', sa.String(length=50), nullable=False),
+    sa.Column('email', sa.String(length=120), nullable=False),
+    sa.Column('password', sa.String(length=200), nullable=False),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('email'),
+    sa.UniqueConstraint('username')
+    )
+    # ### end Alembic commands ###
+
+
+def downgrade():
+    # ### commands auto generated by Alembic - please adjust! ###
+    op.drop_table('user')
+    # ### end Alembic commands ###
+
+### migrations/versions/b61a4672f274_add_last_name_and_address_to_user.py ###
+"""Add last_name and address to User
+
+Revision ID: b61a4672f274
+Revises: 245ea1f5d7a0
+Create Date: 2025-02-11 01:07:39.314243
+
+"""
+from alembic import op
+import sqlalchemy as sa
+
+
+# revision identifiers, used by Alembic.
+revision = 'b61a4672f274'
+down_revision = '245ea1f5d7a0'
+branch_labels = None
+depends_on = None
+
+
+def upgrade():
+    # ### commands auto generated by Alembic - please adjust! ###
+    with op.batch_alter_table('user', schema=None) as batch_op:
+        batch_op.add_column(sa.Column('last_name', sa.String(length=50), nullable=True))
+        batch_op.add_column(sa.Column('address', sa.String(length=255), nullable=True))
+
+    # ### end Alembic commands ###
+
+
+def downgrade():
+    # ### commands auto generated by Alembic - please adjust! ###
+    with op.batch_alter_table('user', schema=None) as batch_op:
+        batch_op.drop_column('address')
+        batch_op.drop_column('last_name')
+
+    # ### end Alembic commands ###
+
+### migrations/versions/dd00dd5fd781_add_inquiry_model.py ###
+"""Add Inquiry model
+
+Revision ID: dd00dd5fd781
+Revises: d73542a2ed07
+Create Date: 2025-01-29 00:05:45.856895
+
+"""
+from alembic import op
+import sqlalchemy as sa
+
+
+# revision identifiers, used by Alembic.
+revision = 'dd00dd5fd781'
+down_revision = 'd73542a2ed07'
+branch_labels = None
+depends_on = None
+
+
+def upgrade():
+    # ### commands auto generated by Alembic - please adjust! ###
+    op.create_table('inquiry',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('name', sa.String(length=100), nullable=False),
+    sa.Column('email', sa.String(length=120), nullable=False),
+    sa.Column('subject', sa.String(length=150), nullable=True),
+    sa.Column('message', sa.Text(), nullable=False),
+    sa.Column('created_at', sa.DateTime(), nullable=True),
+    sa.PrimaryKeyConstraint('id')
+    )
+    # ### end Alembic commands ###
+
+
+def downgrade():
+    # ### commands auto generated by Alembic - please adjust! ###
+    op.drop_table('inquiry')
+    # ### end Alembic commands ###
+
+### migrations/versions/f26fccac8667_přidáno_pole_stock_do_product.py ###
+"""Přidáno pole stock do Product
+
+Revision ID: f26fccac8667
+Revises: 31f4976b90ce
+Create Date: 2025-02-10 13:48:45.470807
+
+"""
+from alembic import op
+import sqlalchemy as sa
+
+
+# revision identifiers, used by Alembic.
+revision = 'f26fccac8667'
+down_revision = '31f4976b90ce'
+branch_labels = None
+depends_on = None
+
+
+def upgrade():
+    # ### commands auto generated by Alembic - please adjust! ###
+    with op.batch_alter_table('product', schema=None) as batch_op:
+        batch_op.add_column(sa.Column('stock', sa.Integer(), nullable=False, server_default='0'))
+
+
+    # ### end Alembic commands ###
+
+
+def downgrade():
+    # ### commands auto generated by Alembic - please adjust! ###
+    with op.batch_alter_table('product', schema=None) as batch_op:
+        batch_op.drop_column('stock')
+
+    # ### end Alembic commands ###
+
+### app/__init__.py ###
+from flask import Flask
+from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
+from flask_mail import Mail
+from flask_bcrypt import Bcrypt
+from flask_login import LoginManager, current_user
+from flask_wtf import CSRFProtect  # Správný import CSRF ochrany
+
+# Inicializace rozšíření
+db = SQLAlchemy()
+migrate = Migrate()
+mail = Mail()
+bcrypt = Bcrypt()
+login_manager = LoginManager()
+csrf = CSRFProtect()
+
+def create_app():
+    app = Flask(__name__)
+    app.config.from_object('config.Config')
+
+    # Propojení rozšíření s aplikací
+    db.init_app(app)
+    migrate.init_app(app, db)
+    mail.init_app(app)
+    bcrypt.init_app(app)
+    login_manager.init_app(app)
+    csrf.init_app(app)  # Aktivace CSRF ochrany
+
+    # Nastavení login manageru
+    login_manager.login_view = "views.login"
+    login_manager.login_message_category = "info"
+
+    # Import modelů až po inicializaci rozšíření, aby se předešlo cirkulárním importům
+    from app.models import User
+
+    @login_manager.user_loader
+    def load_user(user_id):
+        return User.query.get(int(user_id))
+
+    # Import CLI příkazů
+    from app.commands import register_commands
+    register_commands(app)
+
+    # Import blueprintů po inicializaci
+    from app.views.routes import views
+    from app.views.admin_routes import admin
+    from app.views.cart_routes import cart
+
+    app.register_blueprint(views)
+    app.register_blueprint(admin)
+    app.register_blueprint(cart)
+
+    # Injectování počtu položek v košíku do kontextu šablon
+    @app.context_processor
+    def inject_cart_count():
+        if current_user.is_authenticated:
+            from app.models import CartItem  # 🔥 Import uvnitř funkce zabrání cirkulárnímu importu
+            cart_items = CartItem.query.filter_by(user_id=current_user.id).all()
+            cart_count = sum(item.quantity for item in cart_items)
+        else:
+            cart_count = 0
+        return dict(cart_item_count=cart_count)
+
+    return app
+
+### app/check_constraints.py ###
+import sqlite3
+
+# Otevření databáze (uprav název souboru podle své databáze)
+conn = sqlite3.connect('app.db')  # Nahraď 'app.db' názvem své databáze
+cursor = conn.cursor()
+
+# Výpis cizích klíčů v tabulce cart_item
+cursor.execute("PRAGMA foreign_key_list(cart_item);")
+foreign_keys = cursor.fetchall()
+
+for fk in foreign_keys:
+    print(fk)
+
+conn.close()
+
+### app/commands.py ###
+from flask import current_app
+from app import db, bcrypt
+from app.models import User
+
+def register_commands(app):
+    @app.cli.command("create-admin")
+    def create_admin():
+        """Vytvoří administrátorský účet."""
+        with app.app_context():
+            existing_admin = User.query.filter_by(email="admin@artemoderno.com").first()
+            if existing_admin:
+                print("Admin účet již existuje.")
+                return
+
+            hashed_password = bcrypt.generate_password_hash("arte2024").decode("utf-8")
+            admin = User(username="admin", email="admin@artemoderno.com", password=hashed_password, role='admin')
+            db.session.add(admin)
+            db.session.commit()
+            print("Admin účet byl úspěšně vytvořen!")
+
+### app/models.py ###
+import os
+from flask_login import UserMixin
+from datetime import datetime
+from app import db  # ✅ Opraveno - už nevoláme db = SQLAlchemy()
+
+class User(db.Model, UserMixin):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(50), unique=True, nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    password = db.Column(db.String(200), nullable=False)
+    role = db.Column(db.String(20), nullable=False, default='user')  # Přidali jsme role
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        return f"<User {self.username}>"
+
+
+class Inquiry(db.Model):
+    """Tabulka dotazů od zákazníků."""
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    email = db.Column(db.String(120), nullable=False)
+    subject = db.Column(db.String(150))
+    message = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        return f"<Inquiry from {self.name}, {self.email}>"
+
+class Product(db.Model):
+    """Tabulka produktů (obrazy, sochy) v e-shopu."""
+    id = db.Column(db.Integer, primary_key=True)
+    position_id = db.Column(db.Integer, unique=True, nullable=False)
+    name = db.Column(db.String(150), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    price = db.Column(db.Float, nullable=False)
+    image_filename = db.Column(db.String(300), nullable=True)  # Název souboru obrázku
+    stock = db.Column(db.Integer, nullable=False, default=0)
+  # Přidáno pole pro sklad
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def get_image_url(self):
+        """Vrací URL obrázku nebo placeholder, pokud obrázek není nahrán."""
+        if self.image_filename:
+            return f"/static/uploads/{self.image_filename}"
+        return "/static/images/placeholder.png"
+
+    def __repr__(self):
+        return f"<Product {self.name}, Position {self.position_id}>"
+    
+from app import db
+
+class CartItem(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    product_id = db.Column(db.Integer, db.ForeignKey('product.id', ondelete="CASCADE"), nullable=False)
+    quantity = db.Column(db.Integer, default=1, nullable=False)
+
+    product = db.relationship('Product', backref=db.backref('cart_items', cascade='all, delete'))
+
+    def __repr__(self):
+        return f"<CartItem User {self.user_id}, Product {self.product_id}, Qty {self.quantity}>"
+
+### app/templates/add_product.html ###
+<form
+  method="POST"
+  action="{{ url_for('admin.add_product') }}"
+  enctype="multipart/form-data"
+>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+  <label for="position_id">ID pozice:</label>
+  <input
+    type="number"
+    name="position_id"
+    id="position_id"
+    required
+  /><br /><br />
+
+  <label for="name">Název produktu:</label>
+  <input type="text" name="name" id="name" required /><br /><br />
+
+  <label for="price">Cena (Kč):</label>
+  <input
+    type="number"
+    step="0.01"
+    name="price"
+    id="price"
+    required
+  /><br /><br />
+
+  <label for="stock">Počet kusů na skladě:</label>
+  <input type="number" name="stock" id="stock" required /><br /><br />
+
+  <label for="description">Popis:</label><br />
+  <textarea name="description" id="description" rows="4"></textarea><br /><br />
+
+  <label for="image">Obrázek produktu:</label>
+  <input type="file" name="image" id="image" accept="image/*" /><br /><br />
+
+  <button type="submit">Přidat produkt</button>
+</form>
+
+<a href="{{ url_for('admin.dashboard') }}">
+  <button>⬅️ Zpět na admin panel</button>
+</a>
+
+### app/templates/admin.html ###
+{% extends "layout.html" %} {% block title %}Admin Přihlášení{% endblock %} {%
+block content %}
+<h1>Admin Přihlášení</h1>
+<form method="POST" action="{{ url_for('admin.login') }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> <!-- CSRF token -->
+
+  <label for="username">Uživatelské jméno:</label>
+  <input type="text" name="username" id="username" required /><br /><br />
+
+  <label for="password">Heslo:</label>
+  <input type="password" name="password" id="password" required /><br /><br />
+
+  <button type="submit">Přihlásit</button>
+</form>
+{% endblock %}
+
+### app/templates/admin_dashboard.html ###
+{% extends "layout.html" %} {% block title %}Admin Panel{% endblock %} {% block
+content %}
+<h2>Admin Panel - ArteModerno</h2>
+
+<!-- Odkaz na odhlášení -->
+<a href="{{ url_for('admin.logout') }}" class="btn-logout">🚪 Odhlásit se</a>
+
+<!-- Sekce pro správu produktů -->
+<h3>Správa produktů</h3>
+<a href="{{ url_for('admin.add_product') }}" class="btn-add-product"
+  >➕ Přidat nový produkt</a
+>
+
+<!-- Tabulka produktů -->
+<table class="admin-table">
+  <thead>
+    <tr>
+      <th>Obrázek</th>
+      <th>ID</th>
+      <th>Název</th>
+      <th>Cena</th>
+      <th>Akce</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for product in products %}
+    <tr>
+      <td>
+        {% if product.image_filename %}
+        <img
+          src="{{ url_for('static', filename='uploads/' ~ product.image_filename) }}"
+          alt="{{ product.name }}"
+          class="product-thumbnail"
+        />
+        {% else %}
+        <span>Žádný obrázek</span>
+        {% endif %}
+      </td>
+      <td>{{ product.position_id }}</td>
+      <td>{{ product.name }}</td>
+      <td>{{ product.price }} Kč</td>
+      <td class="actions">
+        <a
+          href="{{ url_for('admin.edit_product', product_id=product.id) }}"
+          class="btn-edit"
+          >✏️ Upravit</a
+        >
+        <form
+          method="POST"
+          action="{{ url_for('admin.delete_product', product_id=product.id) }}"
+          class="delete-form"
+        >
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+          <button
+            type="submit"
+            class="btn-delete"
+            onclick="return confirm('Opravdu chcete smazat tento produkt?')"
+          >
+            🗑️ Smazat
+          </button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<!-- Styly -->
+<style>
+  h2,
+  h3 {
+    color: #333;
+    text-align: center;
+    margin-bottom: 20px;
+  }
+
+  .btn-logout,
+  .btn-add-product {
+    display: inline-block;
+    margin-bottom: 20px;
+    padding: 10px 15px;
+    background-color: #dc3545;
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+  }
+
+  .btn-add-product {
+    background-color: #28a745;
+  }
+
+  .btn-logout:hover,
+  .btn-add-product:hover {
+    opacity: 0.9;
+  }
+
+  .admin-table {
+    width: 66%; /* Zmenšení šířky tabulky na 2/3 */
+    border-collapse: collapse;
+    margin: 0 auto; /* Centrovaní tabulky */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .admin-table th,
+  .admin-table td {
+    border: 1px solid #ddd;
+    padding: 10px; /* Menší padding pro kompaktní vzhled */
+    text-align: center;
+  }
+
+  .admin-table th {
+    background-color: #f4f4f4;
+    color: #333;
+  }
+
+  .product-thumbnail {
+    width: 40px; /* Menší obrázky pro lepší přehlednost */
+    height: auto;
+    border-radius: 5px;
+  }
+
+  .actions a,
+  .actions button {
+    margin: 3px;
+    padding: 5px 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    text-decoration: none;
+  }
+
+  .btn-edit {
+    background-color: #007bff;
+    color: white;
+  }
+
+  .btn-edit:hover {
+    background-color: #0056b3;
+  }
+
+  .btn-delete {
+    background-color: #dc3545;
+    color: white;
+  }
+
+  .btn-delete:hover {
+    background-color: #a71d2a;
+  }
+
+  .delete-form {
+    display: inline;
+  }
+</style>
+
+{% endblock %}
+
+### app/templates/admin_orders.html ###
+{% extends "layout.html" %} {% block title %}Objednávky{% endblock %} {% block
+content %}
+<h2>🛒 Objednávky</h2>
+<table class="admin-table">
+  <thead>
+    <tr>
+      <th>ID Objednávky</th>
+      <th>Uživatel</th>
+      <th>Produkty</th>
+      <th>Celková cena</th>
+      <th>Datum</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for order in orders %}
+    <tr>
+      <td>{{ order.id }}</td>
+      <td>{{ order.user.username }}</td>
+      <td>
+        <ul>
+          {% for item in order.items %}
+          <li>{{ item.product.name }} ({{ item.quantity }} ks)</li>
+          {% endfor %}
+        </ul>
+      </td>
+      <td>{{ order.total_price }} Kč</td>
+      <td>{{ order.created_at.strftime('%d.%m.%Y') }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
+
+### app/templates/admin_requests.html ###
+{% extends "layout.html" %} {% block title %}Požadavky{% endblock %} {% block
+content %}
+<h2>📩 Požadavky</h2>
+<table class="admin-table">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Uživatel</th>
+      <th>Popis</th>
+      <th>Datum</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for request in requests %}
+    <tr>
+      <td>{{ request.id }}</td>
+      <td>{{ request.user.username }}</td>
+      <td>{{ request.description }}</td>
+      <td>{{ request.created_at.strftime('%d.%m.%Y') }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
+
+### app/templates/admin_users.html ###
+{% extends "layout.html" %} {% block title %}Databáze uživatelů{% endblock %} {%
+block content %}
+<h2>👤 Databáze uživatelů</h2>
+<table class="admin-table">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Uživatelské jméno</th>
+      <th>Email</th>
+      <th>Role</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for user in users %}
+    <tr>
+      <td>{{ user.id }}</td>
+      <td>{{ user.username }}</td>
+      <td>{{ user.email }}</td>
+      <td>{{ user.role }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
+
+### app/templates/cart.html ###
+{% extends "layout.html" %} {% block title %}Košík{% endblock %} {% block
+content %}
+<div class="cart-wrapper">
+  <h1>Váš košík</h1>
+
+  <div class="cart-container">
+    {% if cart_items %}
+    <table class="cart-table">
+      <thead>
+        <tr>
+          <th>Obrázek</th>
+          <th>Produkt</th>
+          <th>Cena za kus</th>
+          <th>Množství</th>
+          <th>Celková cena</th>
+          <th>Akce</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in cart_items %}
+        <tr class="cart-item-row" data-product-id="{{ item.product.id }}">
+          <td class="image-cell">
+            {% if item.product.image_filename %}
+            <div class="image-container">
+              <img
+                src="{{ url_for('static', filename='uploads/' ~ item.product.image_filename) }}"
+                alt="{{ item.product.name }}"
+                class="product-thumbnail"
+              />
+            </div>
+            {% else %}
+            <div class="image-container no-image">
+              <span>Žádný obrázek</span>
+            </div>
+            {% endif %}
+          </td>
+          <td>{{ item.product.name }}</td>
+          <td>{{ item.product.price }} Kč</td>
+          <td>{{ item.quantity }}</td>
+          <td>{{ item.product.price * item.quantity }} Kč</td>
+          <td>
+            <button
+              class="remove-from-cart btn-delete"
+              data-product-id="{{ item.product.id }}"
+            >
+              🗑️ Odebrat
+            </button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <div class="cart-summary">
+      <h2>Celkem: {{ total_price }} Kč</h2>
+      <a href="{{ url_for('views.galerie') }}" class="btn-continue"
+        >Pokračovat v nakupování</a
+      >
+    </div>
+    {% else %}
+    <div class="empty-cart">
+      <p>Váš košík je prázdný.</p>
+      <a href="{{ url_for('views.galerie') }}" class="btn-continue"
+        >Přejít do galerie</a
+      >
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<style>
+  .cart-wrapper {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+
+  h1 {
+    color: #333;
+    text-align: center;
+    margin-bottom: 20px;
+  }
+
+  .cart-container {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+  }
+
+  .cart-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+  }
+
+  .cart-table th,
+  .cart-table td {
+    border: 1px solid #ddd;
+    padding: 12px;
+    text-align: center;
+  }
+
+  .cart-table th {
+    background-color: #f4f4f4;
+    color: #333;
+    font-weight: 600;
+  }
+
+  /* Styly pro obrázky */
+  .image-cell {
+    width: 60px;
+    height: 60px;
+    padding: 4px !important;
+  }
+
+  .image-container {
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .no-image {
+    background-color: #e9ecef;
+    color: #6c757d;
+    font-size: 0.8em;
+  }
+
+  .product-thumbnail {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    display: block;
+  }
+
+  /* Tlačítka a akce */
+  .btn-delete {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+
+  .btn-delete:hover {
+    background-color: #c82333;
+  }
+
+  .cart-summary {
+    text-align: right;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 2px solid #eee;
+  }
+
+  .cart-summary h2 {
+    color: #333;
+    margin-bottom: 15px;
+  }
+
+  .btn-continue {
+    display: inline-block;
+    background-color: #28a745;
+    color: white;
+    padding: 10px 20px;
+    text-decoration: none;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+  }
+
+  .btn-continue:hover {
+    background-color: #218838;
+  }
+
+  .empty-cart {
+    text-align: center;
+    padding: 40px 20px;
+  }
+
+  .empty-cart p {
+    color: #666;
+    margin-bottom: 20px;
+    font-size: 1.1em;
+  }
+</style>
+
+<script src="{{ url_for('static', filename='js/cart.js') }}"></script>
+{% endblock %}
+
+### app/templates/edit_product.html ###
+{% extends "layout.html" %} {% block title %}Upravit produkt{% endblock %} {%
+block content %}
+<h2>Upravit produkt</h2>
+
+<!-- Flash zprávy -->
+{% with messages = get_flashed_messages(with_categories=true) %} {% if messages
+%}
+<ul>
+  {% for category, message in messages %}
+  <li class="alert-{{ category }}">{{ message }}</li>
+  {% endfor %}
+</ul>
+{% endif %} {% endwith %}
+
+<!-- Formulář pro úpravu produktu -->
+<form
+  method="POST"
+  action="{{ url_for('admin.edit_product', product_id=product.id) }}"
+  enctype="multipart/form-data"
+>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+  <!-- CSRF token -->
+  <label for="position_id">ID pozice:</label>
+  <input
+    type="number"
+    name="position_id"
+    id="position_id"
+    value="{{ product.position_id }}"
+    required
+  /><br /><br />
+
+  <label for="name">Název produktu:</label>
+  <input
+    type="text"
+    name="name"
+    id="name"
+    value="{{ product.name }}"
+    required
+  /><br /><br />
+
+  <label for="price">Cena (Kč):</label>
+  <input
+    type="number"
+    step="0.01"
+    name="price"
+    id="price"
+    value="{{ product.price }}"
+    required
+  /><br /><br />
+
+  <label for="description">Popis:</label><br />
+  <textarea name="description" id="description" rows="4">
+{{ product.description }}</textarea
+  ><br /><br />
+
+  <!-- Zobrazení aktuálního obrázku -->
+  {% if product.image_filename %}
+  <p>Aktuální obrázek:</p>
+  <img
+    src="{{ product.get_image_url() }}"
+    alt="{{ product.name }}"
+    style="max-width: 200px"
+  /><br /><br />
+
+  <!-- Možnost smazat obrázek -->
+  <input type="checkbox" name="delete_image" id="delete_image" />
+  <label for="delete_image">Smazat aktuální obrázek</label><br /><br />
+  {% endif %}
+
+  <!-- Nahrání nového obrázku -->
+  <label for="image">Nahrát nový obrázek:</label>
+  <input type="file" name="image" id="image" accept="image/*" /><br /><br />
+
+  <button type="submit">Uložit změny</button>
+</form>
+
+<a href="{{ url_for('admin.dashboard') }}">⬅️ Zpět na dashboard</a>
+{% endblock %}
+
+### app/templates/galerie.html ###
+{% extends "layout.html" %}
+{% block title %}Galerie{% endblock %}
+
+{% block content %}
+<h1 class="gallery-heading">Galerie</h1>
+
+<div class="gallery-container">
+  {% for product in products %}
+  <div class="gallery-item {% if loop.index % 2 == 0 %}reverse{% endif %}">
+    <div class="gallery-image">
+      <div class="image-frame">
+        <img src="{{ product.get_image_url() }}" alt="{{ product.name }}">
+      </div>
+    </div>
+    <div class="gallery-info">
+      <h3>{{ product.name }}</h3>
+      <p class="gallery-description">{{ product.description or 'Žádný popis není dostupný' }}</p>
+      <p class="gallery-price"><strong>{{ product.price }} Kč</strong></p>
+      <p class="gallery-stock">
+        {% if product.stock > 0 %}
+          <strong>Skladem: {{ product.stock }} kus(ů)</strong>
+        {% else %}
+          <strong class="out-of-stock">Vyprodáno</strong>
+        {% endif %}
+      </p>
+      <button class="buy-button" data-product-id="{{ product.id }}" {% if product.stock == 0 %}disabled{% endif %}>
+        🛒 Koupit
+      </button>
+    </div>
+  </div>
+  {% else %}
+  <p class="empty-gallery-message">Zatím zde nejsou žádné produkty.</p>
+  {% endfor %}
+</div>
+
+<style>
+  .gallery-heading {
+    text-align: center;
+    font-size: 2.5rem;
+    margin-bottom: 40px;
+    color: #333;
+  }
+
+  .gallery-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
+    padding: 20px;
+  }
+
+  .gallery-item {
+    background-color: #fff;
+    border-radius: 16px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    transition: transform 0.3s ease;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .gallery-item:hover {
+    transform: translateY(-5px);
+  }
+
+  .gallery-image {
+    width: 100%;
+    height: 250px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #f8f8f8;
+  }
+
+  .gallery-image img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: cover;
+    border-radius: 8px;
+  }
+
+  .gallery-info {
+    padding: 20px;
+    text-align: center;
+  }
+
+  .gallery-info h3 {
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+    color: #444;
+  }
+
+  .gallery-description {
+    font-size: 1rem;
+    color: #666;
+    margin-bottom: 15px;
+  }
+
+  .gallery-price {
+    font-size: 1.2rem;
+    color: #222;
+    margin-bottom: 10px;
+  }
+
+  .gallery-stock {
+    font-size: 1rem;
+    color: #28a745;
+    margin-bottom: 15px;
+  }
+
+  .gallery-stock .out-of-stock {
+    color: #dc3545;
+  }
+
+  .buy-button {
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+
+  .buy-button:hover {
+    background-color: #0056b3;
+  }
+
+  .buy-button[disabled] {
+    background-color: #ccc;
+    cursor: not-allowed;
+  }
+
+  .empty-gallery-message {
+    text-align: center;
+    font-size: 1.2rem;
+    color: #666;
+  }
+
+  @media (max-width: 600px) {
+    .gallery-heading {
+      font-size: 2rem;
+    }
+
+    .gallery-item {
+      flex-direction: column;
+    }
+  }
+</style>
+
+<script src="{{ url_for('static', filename='js/cart.js') }}"></script>
+{% endblock %}
+
+Lorem ipsum dolor sit amet, consectetur adipisicing elit. Veniam doloremque ad necessitatibus fuga, nihil porro laborum, at ratione minus ea molestiae alias reiciendis error itaque natus eveniet in, quisquam eos.
+
+### app/templates/home.html ###
+{% extends 'layout.html' %} {% block title %}Domů{% endblock %} {% block content
+%}
+<div class="hero-section">
+  <div class="hero-text">
+    <h1 class="main-title">Umění, které promlouvá</h1>
+    <p class="subtitle">Objevte jedinečné umělecké skvosty pro váš prostor</p>
+  </div>
+</div>
+
+<div class="home-gallery-container">
+  <div class="home-gallery-flex">
+    <div class="gallery-item">
+      <img
+        src="{{ url_for('static', filename='images/IMG_1.jpeg') }}"
+        alt="Umělecké dílo 1"
+      />
+    </div>
+    <div class="gallery-item">
+      <img
+        src="{{ url_for('static', filename='images/IMG_2.jpeg') }}"
+        alt="Umělecké dílo 2"
+      />
+    </div>
+    <div class="gallery-item">
+      <img
+        src="{{ url_for('static', filename='images/IMG_3.jpeg') }}"
+        alt="Umělecké dílo 3"
+      />
+    </div>
+    <div class="gallery-item">
+      <img
+        src="{{ url_for('static', filename='images/IMG_4.jpeg') }}"
+        alt="Umělecké dílo 4"
+      />
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+### app/templates/kontakt.html ###
+{% extends "layout.html" %} {% block title %}Kontakt{% endblock %} {% block
+content %}
+<h1>Kontakt</h1>
+
+<form method="POST" action="{{ url_for('views.kontakt') }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> <!-- CSRF token -->
+
+  <label for="name">Jméno:</label>
+  <input type="text" id="name" name="name" required /><br /><br />
+
+  <label for="email">E-mail:</label>
+  <input type="email" id="email" name="email" required /><br /><br />
+
+  <label for="subject">Předmět:</label>
+  <input type="text" id="subject" name="subject" /><br /><br />
+
+  <label for="message">Zpráva:</label><br />
+  <textarea id="message" name="message" rows="5" cols="40" required></textarea><br /><br />
+
+  <button type="submit">Odeslat</button>
+</form>
+
+</form>
+{% endblock %}
+
+### app/templates/layout.html ###
+<!DOCTYPE html>
+<html lang="cs">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="csrf-token" content="{{ csrf_token() }}" />
+
+    <title>ArtModerno | {% block title %}{% endblock %}</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/main.css') }}"
+    />
+    <style>
+      .flash-container {
+        position: fixed;
+        top: 10px;
+        right: 10px;
+        width: 300px;
+        z-index: 1000;
+      }
+      .flash-message {
+        padding: 15px;
+        margin-bottom: 10px;
+        border-radius: 5px;
+        color: white;
+        font-weight: bold;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        animation: fadeIn 0.5s ease-in-out;
+      }
+      .alert-success {
+        background-color: #28a745;
+      }
+      .alert-error {
+        background-color: #dc3545;
+      }
+      .alert-info {
+        background-color: #17a2b8;
+      }
+      .alert-warning {
+        background-color: #ffc107;
+        color: black;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(-10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    {% include "navbar.html" %}
+    <div class="flash-container">
+      {% with messages = get_flashed_messages(with_categories=true) %} {% if
+      messages %} {% for category, message in messages %}
+      <div class="flash-message alert-{{ category }}">{{ message }}</div>
+      {% endfor %} {% endif %} {% endwith %}
+    </div>
+    <main class="main-content">{% block content %}{% endblock %}</main>
+    <footer class="footer">
+      <div class="footer-content">
+        <p class="footer-text">© 2025 Arte Moderno. Všechna práva vyhrazena.</p>
+        <div class="social-links">
+          <a href="#" class="social-link">
+            <img
+              src="{{ url_for('static', filename='logo/facebook.svg') }}"
+              alt="Facebook"
+            />
+          </a>
+          <a href="#" class="social-link">
+            <img
+              src="{{ url_for('static', filename='logo/skill-icons_instagram.svg') }}"
+              alt="Instagram"
+            />
+          </a>
+          <a href="#" class="social-link">
+            <img
+              src="{{ url_for('static', filename='logo/x.svg') }}"
+              alt="Twitter/X"
+            />
+          </a>
+        </div>
+      </div>
+    </footer>
+    <script>
+      setTimeout(function () {
+        const flashMessages = document.querySelectorAll(".flash-message");
+        flashMessages.forEach((msg) => {
+          msg.style.opacity = "0";
+          setTimeout(() => msg.remove(), 500);
+        });
+      }, 5000);
+
+      // Ensure CSRF token is globally available
+      window.CSRF_TOKEN = document
+        .querySelector('meta[name="csrf-token"]')
+        .getAttribute("content");
+    </script>
+  </body>
+</html>
+
+### app/templates/list_inquiries.html ###
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Seznam dotazů</title>
+</head>
+<body>
+    <h1>Seznam dotazů v DB</h1>
+    <ul>
+    {% for i in inquiries %}
+        <li>
+            <strong>{{ i.name }}</strong> 
+            ({{ i.email }})<br>
+            Předmět: {{ i.subject }}<br>
+            Zpráva: {{ i.message }}<br>
+            <em>vloženo: {{ i.created_at }}</em>
+        </li>
+        <hr>
+    {% endfor %}
+    </ul>
+</body>
+</html>
+
+### app/templates/login.html ###
+login_html = """ {% extends "layout.html" %} {% block title %}Přihlášení{%
+endblock %} {% block content %}
+<h1>Přihlášení</h1>
+<form method="POST" action="{{ url_for('views.login') }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> <!-- CSRF token -->
+
+  <label for="email">E-mail:</label>
+  <input type="email" name="email" id="email" required /><br /><br />
+
+  <label for="password">Heslo:</label>
+  <input type="password" name="password" id="password" required /><br /><br />
+
+  <button type="submit">Přihlásit</button>
+</form>
+<p>
+  Nemáte ještě účet?
+  <a href="{{ url_for('views.register') }}">Zaregistrujte se</a>.
+</form>
+{% endblock %}
+
+### app/templates/navbar.html ###
+<nav class="navbar">
+  <div class="navbar-logo">
+    <a href="{{ url_for('views.home') }}">
+      <img
+        src="{{ url_for('static', filename='logo/Logo_4_svg.svg') }}"
+        alt="ArtModerno Logo"
+      />
+    </a>
+  </div>
+
+  <div class="navbar-links">
+    <a href="{{ url_for('views.home') }}" class="nav-link">Home</a>
+    <a href="{{ url_for('views.galerie') }}" class="nav-link">Galerie</a>
+    <a href="{{ url_for('views.kontakt') }}" class="nav-link">Kontakt</a>
+
+    {% if current_user.is_authenticated %} {% if current_user.role == 'admin' %}
+    <a href="{{ url_for('admin.dashboard') }}" class="nav-link">Admin Panel</a>
+    {% else %}
+    <!-- Ikona košíku pro běžné uživatele -->
+    <a href="{{ url_for('cart.view_cart') }}" class="nav-link cart-icon">
+      🛒 <span id="cart-count">{{ cart_item_count }}</span>
+    </a>
+    {% endif %}
+    <a href="{{ url_for('views.logout') }}" class="nav-link">Odhlásit se</a>
+    {% else %}
+    <a href="{{ url_for('views.register') }}" class="nav-link">Registrace</a>
+    <a href="{{ url_for('views.login') }}" class="nav-link">Přihlášení</a>
+    {% endif %}
+  </div>
+</nav>
+
+### app/templates/register.html ###
+{% extends "layout.html" %} {% block title %}Registrace{% endblock %} {% block
+content %}
+<h1>Registrace</h1>
+<form method="POST" action="{{ url_for('views.register') }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+  <!-- CSRF token -->
+
+  <label for="username">Uživatelské jméno:</label>
+  <input type="text" name="username" id="username" required /><br /><br />
+
+  <label for="email">E-mail:</label>
+  <input type="email" name="email" id="email" required /><br /><br />
+
+  <label for="password">Heslo:</label>
+  <input type="password" name="password" id="password" required /><br /><br />
+
+  <label for="confirm_password">Potvrzení hesla:</label>
+  <input
+    type="password"
+    name="confirm_password"
+    id="confirm_password"
+    required
+  /><br /><br />
+
+  <button type="submit">Registrovat</button>
+</form>
+
+{% endblock %}
+
+### app/views/cart_routes.py ###
+from flask import Blueprint, request, jsonify, render_template, session
+from flask_login import login_required, current_user
+from app.models import Product, CartItem
+from app import db
+
+cart = Blueprint("cart", __name__, url_prefix="/cart")
+
+# Funkce pro aktualizaci počtu položek v košíku
+def update_cart_count():
+    cart_items = CartItem.query.filter_by(user_id=current_user.id).all()
+    session['cart_item_count'] = sum(item.quantity for item in cart_items)
+
+# Přidání produktu do košíku
+@cart.route('/add', methods=['POST'])
+@login_required
+def add_to_cart():
+    data = request.get_json()
+    product_id = data.get('product_id')
+
+    if not product_id:
+        return jsonify({'message': 'Produkt nebyl nalezen.'}), 400
+
+    product = Product.query.get(product_id)
+    if not product:
+        return jsonify({'message': 'Produkt neexistuje.'}), 404
+
+    # Kontrola dostupnosti na skladě
+    if product.stock <= 0:
+        return jsonify({'message': 'Produkt není skladem.'}), 400
+
+    existing_item = CartItem.query.filter_by(user_id=current_user.id, product_id=product_id).first()
+    if existing_item:
+        if existing_item.quantity < product.stock:
+            existing_item.quantity += 1
+        else:
+            return jsonify({'message': 'Nelze přidat více kusů, než je skladem.'}), 400
+    else:
+        new_item = CartItem(user_id=current_user.id, product_id=product_id, quantity=1)
+        db.session.add(new_item)
+
+    db.session.commit()
+    return jsonify({'message': f'Produkt {product.name} byl přidán do košíku.'}), 200
+
+
+
+
+# Odebrání produktu z košíku
+@cart.route('/remove', methods=['POST'])
+@login_required
+def remove_from_cart():
+    data = request.get_json()
+    product_id = data.get('product_id')
+
+    if not product_id:
+        return jsonify({"error": "Produkt nebyl specifikován."}), 400
+
+    cart_item = CartItem.query.filter_by(user_id=current_user.id, product_id=product_id).first()
+
+    if not cart_item:
+        return jsonify({"error": "Produkt není v košíku."}), 404
+
+    if cart_item.quantity > 1:
+        cart_item.quantity -= 1
+    else:
+        db.session.delete(cart_item)
+
+    db.session.commit()
+    return jsonify({"message": "Produkt byl úspěšně odstraněn z košíku."}), 200
+
+
+# Zobrazení košíku
+@cart.route('/view', methods=['GET'])
+@login_required
+def view_cart():
+    # Odstranění osamocených položek před zobrazením košíku
+    orphaned_items = CartItem.query.filter(~CartItem.product.has()).all()
+    for item in orphaned_items:
+        db.session.delete(item)
+    db.session.commit()
+
+    cart_items = CartItem.query.filter_by(user_id=current_user.id).all()
+    total_price = sum(item.product.price * item.quantity for item in cart_items)
+
+    return render_template('cart.html', cart_items=cart_items, total_price=total_price)
+
+
+# Route pro počet položek v košíku
+@cart.route('/count', methods=['GET'])
+@login_required
+def cart_count():
+    cart_items = CartItem.query.filter_by(user_id=current_user.id).all()
+    cart_item_count = sum(item.quantity for item in cart_items)
+    return jsonify({'cart_item_count': cart_item_count})
+
+### app/views/admin_routes.py ###
+import os
+from flask import current_app, Blueprint, render_template, request, redirect, url_for, flash, session
+from werkzeug.utils import secure_filename
+from functools import wraps
+from app.models import Product
+from app import db
+from flask_login import current_user, login_user, login_required
+from app.models import User  # Import modelu User
+from app import bcrypt       # Import bcrypt pro ověřování hesla
+from app.models import CartItem
+
+admin = Blueprint("admin", __name__, url_prefix="/admin")
+
+
+# Dekorátor pro zabezpečení admin panelu
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated:
+            flash("Musíte být přihlášen/a jako administrátor.", "error")
+            return redirect(url_for("admin.login"))
+
+        if current_user.role != 'admin':
+            flash("Nemáte oprávnění přistupovat k admin panelu.", "error")
+            return redirect(url_for("views.home"))
+
+        return f(*args, **kwargs)
+    return decorated_function
+
+
+from flask_login import login_user
+
+@admin.route("/login", methods=["GET", "POST"])
+def login():
+    if current_user.is_authenticated and current_user.role == "admin":
+        return redirect(url_for("admin.dashboard"))
+
+    if request.method == "POST":
+        username = request.form.get("username")
+        password = request.form.get("password")
+
+        admin_user = User.query.filter_by(username=username, role='admin').first()
+
+        if admin_user and bcrypt.check_password_hash(admin_user.password, password):
+            login_user(admin_user)  # Flask-Login
+            flash("Úspěšně přihlášen!", "success")
+            return redirect(url_for("admin.dashboard"))
+        else:
+            flash("Neplatné přihlašovací údaje!", "error")
+
+    return render_template("admin.html")
+
+
+
+
+@admin.route("/logout")
+@admin_required
+def logout():
+    session.pop("admin_logged_in", None)
+    flash("Byl jste úspěšně odhlášen.", "info")
+    return redirect(url_for("admin.login"))
+
+@admin.route("/dashboard")
+@admin_required
+def dashboard():
+    print(f"DEBUG: Přihlášený uživatel: {current_user.username}, Role: {current_user.role}")
+    products = Product.query.all()
+    return render_template("admin_dashboard.html", products=products)
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in current_app.config['ALLOWED_EXTENSIONS']
+
+@admin.route('/add_product', methods=['GET', 'POST'])
+@admin_required
+def add_product():
+    if request.method == 'POST':
+        position_id = request.form.get('position_id')
+        name = request.form.get('name')
+        description = request.form.get('description')
+        price = request.form.get('price')
+        stock = request.form.get('stock')
+        image = request.files.get('image')
+
+        # Debugging - Výpis všech hodnot pro ověření
+        print(f"DEBUG - Pozice ID: {position_id}")
+        print(f"DEBUG - Název: {name}")
+        print(f"DEBUG - Cena: {price}")
+        print(f"DEBUG - Sklad: {stock}")
+        print(f"DEBUG - Obrázek: {image.filename if image else 'Žádný obrázek'}")
+
+        # Kontrola povinných polí
+        if not (position_id and name and price and stock):
+            flash('Všechna povinná pole (pozice ID, název, cena, sklad) musí být vyplněna.', 'error')
+            return redirect(url_for('admin.add_product'))
+
+        try:
+            # Vytvoření nového produktu
+            new_product = Product(
+                position_id=int(position_id),
+                name=name,
+                description=description,
+                price=float(price),
+                stock=int(stock)
+            )
+
+            # Zpracování obrázku
+            if image:
+                image_filename = secure_filename(image.filename)
+                image_path = os.path.join('app/static/uploads', image_filename)
+                image.save(image_path)
+                new_product.image_filename = image_filename
+
+            # Uložení produktu do databáze
+            db.session.add(new_product)
+            db.session.commit()
+
+            flash('Produkt byl úspěšně přidán.', 'success')
+            return redirect(url_for('admin.dashboard'))
+
+        except Exception as e:
+            print(f"CHYBA PŘI UKLÁDÁNÍ PRODUKTU: {e}")
+            db.session.rollback()
+            flash('Chyba při nahrávání produktu.', 'error')
+            return redirect(url_for('admin.add_product'))
+
+    return render_template('add_product.html')
+
+
+
+@admin.route("/edit_product/<int:product_id>", methods=["GET", "POST"])
+@admin_required
+def edit_product(product_id):
+    product = Product.query.get_or_404(product_id)
+
+    if request.method == "POST":
+        product.position_id = request.form.get("position_id")
+        product.name = request.form.get("name")
+        product.price = request.form.get("price")
+        product.description = request.form.get("description")
+
+        # Kontrola, zda má být smazán existující obrázek
+        if request.form.get("delete_image"):
+            if product.image_filename:
+                # Smazání souboru z diskového úložiště
+                image_path = os.path.join(current_app.config['UPLOAD_FOLDER'], product.image_filename)
+                if os.path.exists(image_path):
+                    os.remove(image_path)
+                product.image_filename = None  # Smazání odkazu na obrázek v databázi
+
+        # Nahrání nového obrázku
+        image = request.files.get("image")
+        if image and allowed_file(image.filename):
+            filename = secure_filename(image.filename)
+            image_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
+            image.save(image_path)
+            product.image_filename = filename
+
+        db.session.commit()
+        flash("Produkt byl úspěšně aktualizován!", "success")
+        return redirect(url_for("admin.dashboard"))
+
+    return render_template("edit_product.html", product=product)
+
+
+@admin.route("/delete_product/<int:product_id>", methods=["POST"])
+@admin_required
+def delete_product(product_id):
+    product = Product.query.get_or_404(product_id)
+    db.session.delete(product)
+    db.session.commit()
+
+    # Odstranění osamocených položek z košíku
+    orphaned_items = CartItem.query.filter(~CartItem.product.has()).all()
+    for item in orphaned_items:
+        db.session.delete(item)
+    db.session.commit()
+
+    flash("Produkt byl úspěšně smazán!", "success")
+    return redirect(url_for("admin.dashboard"))
+
+### app/views/routes.py ###
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
+from app.models import Inquiry
+from app import db, mail  # importujeme db a mail z __init__.py
+from flask_mail import Message
+from app import db, bcrypt
+from app.models import User
+from flask_login import login_user, current_user, logout_user, login_required
+from app.models import Product
+from app.models import Inquiry, User, Product, CartItem
+from flask import session
+
+
+views = Blueprint("views", __name__)
+cart = Blueprint("cart", __name__, url_prefix="/cart")
+
+@views.route("/", methods=["GET"])
+def home():
+    return render_template("home.html")  # jen příklad
+
+@views.route("/galerie")
+def galerie():
+    products = Product.query.all()  # ✅ Načítáme všechny produkty
+    print("DEBUG: Produkty v galerii:")
+    for product in products:
+        print(f"ID: {product.id}, Název: {product.name}, Popis: {product.description}, Cena: {product.price}")
+    
+    return render_template("galerie.html", products=products)
+
+
+
+
+
+@views.route('/kontakt', methods=['GET', 'POST'])
+def kontakt():
+    if request.method == 'POST':
+        name = request.form.get('name')
+        email = request.form.get('email')
+        subject = request.form.get('subject') or 'Bez předmětu'
+        message = request.form.get('message')
+
+        try:
+            owner_msg = Message(subject=f"Nová zpráva od {name} - {subject}",
+                                sender=email,
+                                recipients=['artemodernoblaha@gmail.com'],
+                                body=f"Od: {name} <{email}>\n\n{message}")
+            mail.send(owner_msg)
+
+            confirmation_msg = Message(subject="Děkujeme za vaši zprávu",
+                                       sender='artemodernoblaha@gmail.com',
+                                       recipients=[email],
+                                       body=f"Dobrý den {name},\n\nDěkujeme za vaši zprávu. Odpovíme vám co nejdříve.\n\nVaše zpráva:\n{message}\n\nS pozdravem,\nArte Moderno")
+            mail.send(confirmation_msg)
+
+            flash('Zpráva byla úspěšně odeslána! Potvrzení bylo zasláno na váš e-mail.', 'success')
+        except Exception as e:
+            print(f"Chyba při odesílání e-mailu: {e}")
+            flash('Odeslání zprávy selhalo. Zkuste to prosím znovu později.', 'error')
+
+        return redirect(url_for('views.kontakt'))
+
+    return render_template('kontakt.html')
+
+
+@views.route("/inquiries")
+def list_inquiries():
+    inquiries = Inquiry.query.all()
+    return render_template("list_inquiries.html", inquiries=inquiries)
+
+@views.route("/register", methods=["GET", "POST"])
+def register():
+    if current_user.is_authenticated:
+        flash("Jste již přihlášen/a.", "info")
+        return redirect(url_for("views.home"))
+
+    if request.method == "POST":
+        username = request.form.get("username")
+        email = request.form.get("email")
+        password = request.form.get("password")
+        confirm_password = request.form.get("confirm_password")
+
+        if password != confirm_password:
+            flash("Hesla se neshodují!", "error")
+            return redirect(url_for("views.register"))
+
+        existing_user = User.query.filter_by(email=email).first()
+        if existing_user:
+            flash("E-mail je již používán. Zvolte jiný.", "error")
+            return redirect(url_for("views.register"))
+
+        hashed_password = bcrypt.generate_password_hash(password).decode("utf-8")
+        new_user = User(username=username, email=email, password=hashed_password, role='user')  # Role je nastavená na 'user'
+        
+        db.session.add(new_user)
+        db.session.commit()
+
+        login_user(new_user)
+        flash("Registrace proběhla úspěšně. Nyní jste přihlášen/a.", "success")
+        return redirect(url_for("views.home"))
+
+    return render_template("register.html")
+
+
+@views.route("/login", methods=["GET", "POST"])
+def login():
+    if current_user.is_authenticated:
+        flash("Jste již přihlášen/a.", "info")
+        return redirect(url_for("views.home"))
+
+    if request.method == "POST":
+        email = request.form.get("email")
+        password = request.form.get("password")
+
+        user = User.query.filter_by(email=email).first()
+
+        if user and bcrypt.check_password_hash(user.password, password):
+            if user.role == 'admin':
+                flash("Přístup do admin panelu je oddělený. Použijte admin přihlášení.", "error")
+                return redirect(url_for("views.login"))
+
+            login_user(user)
+            flash("Přihlášení úspěšné!", "success")
+            return redirect(url_for("views.home"))
+        else:
+            flash("Neplatné přihlašovací údaje!", "error")
+
+    return render_template("login.html")
+
+
+
+@views.route("/logout")
+@login_required
+def logout():
+    """Odhlásí uživatele a přesměruje ho na homepage."""
+    logout_user()  # Flask-Login funkce, zruší session pro daného uživatele
+    flash("Byl jste úspěšně odhlášen.", "info")
+    return redirect(url_for("views.home"))
+
+
+@cart.route("/add", methods=["POST"])
+@login_required
+def add_to_cart():
+    """Přidá produkt do košíku (nebo zvýší množství)"""
+    data = request.get_json()
+    product_id = data.get("product_id")
+
+    product = Product.query.get(product_id)
+    if not product:
+        return jsonify({"error": "Produkt nenalezen"}), 404
+
+    cart_item = CartItem.query.filter_by(user_id=current_user.id, product_id=product_id).first()
+
+    if cart_item:
+        cart_item.quantity += 1  # Zvýší množství
+    else:
+        cart_item = CartItem(user_id=current_user.id, product_id=product_id, quantity=1)
+        db.session.add(cart_item)
+
+    db.session.commit()
+    return jsonify({"message": "Produkt přidán do košíku"}), 200
+
+@cart.route("/remove", methods=["POST"])
+@login_required
+def remove_from_cart():
+    """Odebere produkt z košíku"""
+    data = request.get_json()
+    product_id = data.get("product_id")
+
+    cart_item = CartItem.query.filter_by(user_id=current_user.id, product_id=product_id).first()
+    if not cart_item:
+        return jsonify({"error": "Produkt není v košíku"}), 404
+
+    db.session.delete(cart_item)
+    db.session.commit()
+    return jsonify({"message": "Produkt odebrán z košíku"}), 200
+
+@cart.route("/view", methods=["GET"])
+@login_required
+def view_cart():
+    """Vrátí obsah košíku pro přihlášeného uživatele"""
+    cart_items = CartItem.query.filter_by(user_id=current_user.id).all()
+
+    cart_data = [
+        {
+            "id": item.id,
+            "product_id": item.product.id,
+            "name": item.product.name,
+            "price": item.product.price,
+            "quantity": item.quantity,
+            "total_price": item.product.price * item.quantity
+        }
+        for item in cart_items
+    ]
+
+    return jsonify(cart_data), 200
+
+### app/static/JS/cart.js ###
+// Načtení CSRF tokenu z meta tagu
+const csrfToken = document
+  .querySelector('meta[name="csrf-token"]')
+  ?.getAttribute("content");
+
+// Funkce pro aktualizaci počtu položek v košíku v navbaru
+function updateCartCount() {
+  fetch("/cart/count", {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      const cartCountElement = document.getElementById("cart-count");
+      if (cartCountElement) {
+        cartCountElement.innerText = data.cart_item_count;
+      }
+    })
+    .catch((error) =>
+      console.error("Chyba při aktualizaci počtu položek:", error)
+    );
+}
+
+// Přidání produktu do košíku s kontrolou dostupnosti
+document.querySelectorAll(".buy-button").forEach((button) => {
+  button.addEventListener("click", function () {
+    const productId = this.dataset.productId;
+
+    fetch("/cart/add", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(csrfToken && { "X-CSRFToken": csrfToken }),
+      },
+      body: JSON.stringify({ product_id: productId }),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.error) {
+          alert(data.error); // Zobrazení chyby, pokud není produkt skladem
+        } else {
+          alert(data.message); // Zobrazení zprávy o úspěšném přidání
+          updateCartCount(); // Aktualizace počtu položek v košíku
+        }
+      })
+      .catch((error) => {
+        console.error("Chyba:", error);
+        alert("Došlo k chybě při přidávání do košíku.");
+      });
+  });
+});
+
+// Odebrání produktu z košíku
+document.querySelectorAll(".remove-from-cart").forEach((button) => {
+  button.addEventListener("click", function () {
+    const productId = this.dataset.productId;
+
+    fetch("/cart/remove", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(csrfToken && { "X-CSRFToken": csrfToken }),
+      },
+      body: JSON.stringify({ product_id: productId }),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        alert(data.message);
+        updateCartCount(); // Aktualizace počtu položek v navbaru
+
+        const productRow = document.querySelector(
+          `tr[data-product-id="${productId}"]`
+        );
+        if (productRow) {
+          productRow.remove();
+        }
+
+        // Zkontrolovat, zda košík zůstal prázdný
+        const remainingItems = document.querySelectorAll(".cart-item-row");
+        if (remainingItems.length === 0) {
+          document.querySelector(".cart-container").innerHTML =
+            "<p>Váš košík je prázdný.</p>";
+        }
+      })
+      .catch((error) => {
+        console.error("Chyba:", error);
+        alert("Došlo k chybě při odebírání z košíku.");
+      });
+  });
+});
+
+// Automatická aktualizace počtu položek při načtení stránky
+document.addEventListener("DOMContentLoaded", updateCartCount);
+
+### app/static/css/admin_dashboard.css ###
+
+
+### app/static/css/galerie.css ###
+/* Galerie - hlavní kontejner */
+.gallery-container {
+    width: 90%;
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+    padding-bottom: 40px;
+  }
+  
+  /* Každý produkt */
+  .gallery-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 40px;
+  }
+  
+  .gallery-item.reverse {
+    flex-direction: row-reverse;
+  }
+  
+  /* Obrázek v rámečku */
+  .image-frame {
+    width: 400px;
+    height: 400px;
+    background-color: #f4f4f4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 5px solid #ccc;
+    border-radius: 10px;
+  }
+  
+  /* Text */
+  .gallery-info {
+    flex: 1;
+    max-width: 50%;
+  }
+  
+  .gallery-info h3 {
+    font-size: 1.8rem;
+    font-weight: bold;
+  }
+  
+  .gallery-description {
+    font-size: 1.2rem;
+    color: #555;
+    margin-bottom: 10px;
+  }
+  
+  .gallery-price {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #27ae60;
+  }
+
+### app/static/css/kontakt.css ###
+.alert-success {
+  color: green;
+  background-color: #e6ffe6;
+  border: 1px solid green;
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 5px;
+}
+
+.alert-error {
+  color: red;
+  background-color: #ffe6e6;
+  border: 1px solid red;
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 5px;
+}
+
+### app/static/css/login.css ###
+
+
+### app/static/css/main.css ###
+/* Reset a základní styly */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Montserrat", sans-serif;
+  color: #333;
+  background-color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Navbar - moderní styl */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 5%;
+  background: rgba(255, 255, 255, 0.8); /* Poloprůhledné pozadí */
+  backdrop-filter: blur(10px); /* Efekt rozmazání */
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* Jemný stín */
+  position: fixed;
+  width: 100%;
+  top: 0;
+  z-index: 1000;
+  height: 80px;
+}
+
+/* Logo */
+.navbar-logo img {
+  height: 60px;
+  transition: transform 0.3s ease;
+}
+
+.navbar-logo img:hover {
+  transform: scale(1.1);
+}
+
+/* Navigační odkazy */
+.navbar-links {
+  display: flex;
+  gap: 20px;
+}
+
+/* Odkazy v navbaru */
+.navbar a {
+  color: black; /* Černá barva odkazů */
+  text-decoration: none; /* Odstranění výchozího podtržení */
+  font-weight: 500;
+  padding: 10px 15px;
+  border-radius: 5px;
+  position: relative; /* Umožní přidání vlastního podtržení */
+  transition: all 0.3s ease-in-out;
+  display: inline-block; /* Umožní přizpůsobení šířky podtržení */
+}
+
+.alert-success {
+  color: green;
+  background-color: #e6ffe6;
+  border: 1px solid green;
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 5px;
+}
+
+.alert-error {
+  color: red;
+  background-color: #ffe6e6;
+  border: 1px solid red;
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 5px;
+}
+
+.flash-message {
+  padding: 10px;
+  margin: 10px auto;
+  width: 90%;
+  max-width: 600px;
+  border-radius: 5px;
+  text-align: center;
+  font-weight: bold;
+}
+.alert-success {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+.alert-error {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+.alert-info {
+  background-color: #d1ecf1;
+  color: #0c5460;
+  border: 1px solid #bee5eb;
+}
+.alert-warning {
+  background-color: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeeba;
+}
+
+/* Efekt při najetí myší - podtržení dál od textu */
+.navbar a:hover::after,
+.navbar a.active::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -1px; /* Posunutí podtržení jen o 1 pixel dolů */
+  width: 100%; /* Přizpůsobení délky textu */
+  height: 2px; /* Tloušťka podtržení */
+  background-color: black; /* Barva podtržení */
+}
+
+/* Responsivní navbar */
+@media (max-width: 768px) {
+  .navbar {
+    flex-direction: column;
+    height: auto;
+    padding: 1rem;
+  }
+
+  .navbar-links {
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+}
+
+.hero-text {
+  font-size: 1rem;
+  font-weight: 200;
+  color: #333;
+  text-align: justify;
+  padding: 0 90px;
+}
+
+/* Hlavní obsah */
+.main-content {
+  flex: 1;
+  padding-top: 20px;
+  text-align: center;
+  margin-top: 100px;
+}
+
+/* Galerie fotek – Pouze pro home.html */
+.home-gallery-container {
+  width: 100%;
+  overflow: hidden;
+}
+
+.home-gallery-flex {
+  display: flex;
+  width: 100%;
+  padding-top: 20px;
+}
+
+.home-gallery-flex .gallery-item {
+  flex: 1;
+  overflow: hidden; /* Zabrání přetékání při zvětšení */
+}
+
+.home-gallery-flex .gallery-item img {
+  width: 100%;
+  height: 250px;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.3s ease-in-out; /* Plynulý efekt */
+}
+
+/* Efekt zvětšení při najetí myší */
+.home-gallery-flex .gallery-item img:hover {
+  transform: scale(1.05); /* Zvětší obrázek o 5% */
+}
+
+/* Footer */
+.footer {
+  width: 100%;
+  background-color: #f9f9f9;
+  border-top: 1px solid #eaeaea;
+  padding: 2rem 0;
+  text-align: center;
+  margin-top: auto;
+}
+
+.footer-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  row-gap: 1rem;
+}
+
+/* Sociální sítě */
+.social-links {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  justify-content: center;
+}
+
+.social-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background-color: #f1f1f1;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.social-link:hover {
+  background-color: #e0e0e0;
+  transform: translateY(-2px);
+}
+
+.social-link img {
+  width: 18px;
+  height: 18px;
+}
+
+/* Responzivita */
+@media (max-width: 900px) {
+  .home-gallery-flex {
+    flex-wrap: wrap;
+  }
+  .home-gallery-flex .gallery-item {
+    flex: 1 1 33.333%; /* 3 sloupce */
+  }
+}
+
+@media (max-width: 600px) {
+  .home-gallery-flex .gallery-item {
+    flex: 1 1 50%; /* 2 sloupce */
+  }
+}
+
+@media (max-width: 400px) {
+  .home-gallery-flex .gallery-item {
+    flex: 1 1 100%; /* 1 obrázek na řádek */
+  }
+}
+
+### app/static/css/register.css ###
+
+
