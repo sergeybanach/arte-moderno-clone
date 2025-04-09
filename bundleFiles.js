@@ -5,12 +5,13 @@ const path = require('node:path');
 const config = {
   rootDir: process.cwd(),
   outputFile: 'bundled-project.txt',
-  includeExtensions: [
-    '.js', '.jsx', '.css', '.html', '.py', '.json', '.txt', '.md', '.ini', '.mako', // Text-based extensions
-  ],
+  // Not needed for now
+  // includeExtensions: [
+  //   '.js', '.jsx', '.css', '.html', '.py', '.json', '.txt', '.md', '.ini', '.mako', // Text-based extensions
+  // ],
   excludeDirs: [
     'node_modules',
-    'venv',           // Virtual environment
+    '.venv',           // Virtual environment
     '__pycache__',    // Python bytecode cache
     '.git',          // Git repository
     '.vscode',       // VS Code settings
@@ -26,6 +27,8 @@ const config = {
     'files-tree.txt', // Exclude other generated outputs
     'full-list.txt',
     'list.txt',
+    'file-list.txt',
+    'et --hard 6ac28cb',
   ],
   excludeBinaryExtensions: [
     '.jpg', '.jpeg', '.png', '.gif', '.webp', // Image files
@@ -44,8 +47,10 @@ const shouldIncludeFile = (filePath) => {
     return false;
   }
 
+  // Return all other files
+  return true;
   // Include only if it has an allowed text-based extension
-  return config.includeExtensions.includes(ext);
+  // return config.includeExtensions.includes(ext);
 };
 
 // Check if a directory should be traversed
@@ -103,6 +108,7 @@ async function bundleProject() {
   const stream = (await fs.open(outputPath, 'w')).createWriteStream();
 
   for (const file of files) {
+    console.log("### Writing file: ", file.filePath);
     stream.write(`### ${file.filePath} ###\n${file.content}\n\n`);
   }
 

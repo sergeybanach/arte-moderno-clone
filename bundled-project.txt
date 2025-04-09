@@ -1,3 +1,62 @@
+### .env ###
+# export SECRET_KEY="your-secret-key"
+# export DATABASE_URL="sqlite:///arte_moderno.db"
+# export MAIL_PASSWORD="your-gmail-app-password"
+
+# SECRET_KEY=your-secret-key-here
+# WTF_CSRF_SECRET_KEY=your-csrf-secret-key-here
+DATABASE_URL=sqlite:///instance/arte_moderno.db
+# ADMIN_USERNAME=admin
+# ADMIN_PASSWORD=arte2024
+# MAIL_USERNAME=artemodernoblaha@gmail.com
+# MAIL_PASSWORD=qxunfbtnyvefainm
+
+# DATABASE_URL=postgresql://postgres:205800@localhost:5432/artemoderno
+
+### .gitignore ###
+.venv
+__pycache__
+.env
+
+### __requirements.txt ###
+alembic==1.14.1
+bcrypt==4.2.1
+blinker==1.9.0
+certifi==2024.12.14
+charset-normalizer==3.4.1
+click==8.1.8
+colorama==0.4.6
+filelock==3.13.1
+Flask==3.1.0
+Flask-Bcrypt==1.0.1
+Flask-Login==0.6.3
+Flask-Mail==0.10.0
+Flask-Migrate==4.1.0
+Flask-SQLAlchemy==3.1.1
+Flask-WTF==1.2.2
+fsspec==2024.6.1
+greenlet==3.1.1
+gunicorn==23.0.0
+huggingface-hub==0.28.0
+idna==3.10
+itsdangerous==2.2.0
+Jinja2==3.1.5
+Mako==1.3.8
+MarkupSafe==3.0.2
+mpmath==1.3.0
+networkx==3.3
+numpy==2.1.2
+Pillow==11.0.0
+PyYAML==6.0.2
+regex==2024.11.6
+requests==2.32.3
+safetensors==0.5.2
+setuptools==70.2.0
+SQLAlchemy==2.0.37
+sympy==1.13.1
+tokenizers==0.21.0
+torch==2.5.1
+
 ### bundleFiles.js ###
 const fs = require('node:fs/promises');
 const path = require('node:path');
@@ -6,12 +65,13 @@ const path = require('node:path');
 const config = {
   rootDir: process.cwd(),
   outputFile: 'bundled-project.txt',
-  includeExtensions: [
-    '.js', '.jsx', '.css', '.html', '.py', '.json', '.txt', '.md', '.ini', '.mako', // Text-based extensions
-  ],
+  // Not needed for now
+  // includeExtensions: [
+  //   '.js', '.jsx', '.css', '.html', '.py', '.json', '.txt', '.md', '.ini', '.mako', // Text-based extensions
+  // ],
   excludeDirs: [
     'node_modules',
-    'venv',           // Virtual environment
+    '.venv',           // Virtual environment
     '__pycache__',    // Python bytecode cache
     '.git',          // Git repository
     '.vscode',       // VS Code settings
@@ -27,6 +87,8 @@ const config = {
     'files-tree.txt', // Exclude other generated outputs
     'full-list.txt',
     'list.txt',
+    'file-list.txt',
+    'et --hard 6ac28cb',
   ],
   excludeBinaryExtensions: [
     '.jpg', '.jpeg', '.png', '.gif', '.webp', // Image files
@@ -45,8 +107,10 @@ const shouldIncludeFile = (filePath) => {
     return false;
   }
 
+  // Return all other files
+  return true;
   // Include only if it has an allowed text-based extension
-  return config.includeExtensions.includes(ext);
+  // return config.includeExtensions.includes(ext);
 };
 
 // Check if a directory should be traversed
@@ -104,6 +168,7 @@ async function bundleProject() {
   const stream = (await fs.open(outputPath, 'w')).createWriteStream();
 
   for (const file of files) {
+    console.log("### Writing file: ", file.filePath);
     stream.write(`### ${file.filePath} ###\n${file.content}\n\n`);
   }
 
@@ -123,6 +188,8 @@ async function bundleProject() {
 
 ### config.py ###
 import os
+from dotenv import load_dotenv
+load_dotenv()
 
 class Config:
     SECRET_KEY = os.getenv('SECRET_KEY', 'arte_moderno')
@@ -143,116 +210,6 @@ class Config:
     MAIL_USE_TLS = True
     MAIL_USERNAME = 'artemodernoblaha@gmail.com'  # Váš e-mail
     MAIL_PASSWORD = 'qxunfbtnyvefainm'  # App Password pro Gmail
-
-### __requirements.txt ###
-alembic==1.14.1
-bcrypt==4.2.1
-blinker==1.9.0
-certifi==2024.12.14
-charset-normalizer==3.4.1
-click==8.1.8
-colorama==0.4.6
-filelock==3.13.1
-Flask==3.1.0
-Flask-Bcrypt==1.0.1
-Flask-Login==0.6.3
-Flask-Mail==0.10.0
-Flask-Migrate==4.1.0
-Flask-SQLAlchemy==3.1.1
-Flask-WTF==1.2.2
-fsspec==2024.6.1
-greenlet==3.1.1
-gunicorn==23.0.0
-huggingface-hub==0.28.0
-idna==3.10
-itsdangerous==2.2.0
-Jinja2==3.1.5
-Mako==1.3.8
-MarkupSafe==3.0.2
-mpmath==1.3.0
-networkx==3.3
-numpy==2.1.2
-Pillow==11.0.0
-PyYAML==6.0.2
-regex==2024.11.6
-requests==2.32.3
-safetensors==0.5.2
-setuptools==70.2.0
-SQLAlchemy==2.0.37
-sympy==1.13.1
-tokenizers==0.21.0
-torch==2.5.1
-
-### run.py ###
-from app import create_app
-
-app = create_app()
-
-if __name__ == '__main__':
-    app.run(debug=True)
-
-### file-list.txt ###
-__requirements.txt
-app/__init__.py
-app/check_constraints.py
-app/commands.py
-app/models.py
-app/static/JS/cart.js
-app/static/css/admin_dashboard.css
-app/static/css/galerie.css
-app/static/css/kontakt.css
-app/static/css/login.css
-app/static/css/main.css
-app/static/css/register.css
-app/static/images/Bowie.jpg
-app/static/images/IMG_1.jpeg
-app/static/images/IMG_2.jpeg
-app/static/images/IMG_3.jpeg
-app/static/images/IMG_4.jpeg
-app/static/images/Monet_1.jpg
-app/static/images/nevim.jpg
-app/static/images/vangogh.jpg
-app/static/images/vangogh_1.jpg
-app/static/logo/Logo_1_arteModerno.webp
-app/static/logo/Logo_2_arteModerno.webp
-app/static/logo/Logo_3_arteModerno.webp
-app/static/logo/Logo_3_svg.svg
-app/static/logo/Logo_4_svg.svg
-app/static/logo/facebook.svg
-app/static/logo/skill-icons_instagram.svg
-app/static/logo/x.svg
-app/static/uploads/Bowie.jpg
-app/static/uploads/IMG_1.jpeg
-app/static/uploads/IMG_2.jpeg
-app/static/uploads/IMG_4.jpeg
-app/static/uploads/Monet_1.jpg
-app/static/uploads/nevim.jpg
-app/static/uploads/vangogh.jpg
-app/static/uploads/vangogh_1.jpg
-app/templates/add_product.html
-app/templates/admin.html
-app/templates/admin_dashboard.html
-app/templates/admin_orders.html
-app/templates/admin_requests.html
-app/templates/admin_users.html
-app/templates/cart.html
-app/templates/edit_product.html
-app/templates/galerie.html
-app/templates/home.html
-app/templates/kontakt.html
-app/templates/layout.html
-app/templates/list_inquiries.html
-app/templates/login.html
-app/templates/navbar.html
-app/templates/register.html
-app/views/admin_routes.py
-app/views/cart_routes.py
-app/views/routes.py
-bundleFiles.js
-config.py
-et --hard 6ac28cb
-listFiles.js
-run.py
 
 ### listFiles.js ###
 const fs = require('node:fs/promises');
@@ -365,6 +322,17 @@ flask-bcrypt
 flask-login
 flask-wtf
 werkzeug
+
+### run.py ###
+from app import create_app
+
+app = create_app()
+
+if __name__ == '__main__':
+    app.run(debug=True)
+
+### migrations/README ###
+Single-database configuration for Flask.
 
 ### migrations/alembic.ini ###
 # A generic, single database configuration.
@@ -597,42 +565,6 @@ def downgrade():
     op.drop_table('cart_item')
     # ### end Alembic commands ###
 
-### migrations/versions/31f4976b90ce_přidání_sloupce_role_do_tabulky_user.py ###
-"""Přidání sloupce role do tabulky user
-
-Revision ID: 31f4976b90ce
-Revises: 16e82a0195cc
-Create Date: 2025-02-08 23:57:02.884961
-
-"""
-from alembic import op
-import sqlalchemy as sa
-
-
-# revision identifiers, used by Alembic.
-revision = '31f4976b90ce'
-down_revision = '16e82a0195cc'
-branch_labels = None
-depends_on = None
-
-
-def upgrade():
-    # ### commands auto generated by Alembic - please adjust! ###
-    def upgrade():
-        with op.batch_alter_table('user', schema=None) as batch_op:
-             batch_op.alter_column('role', server_default=None)
-
-
-    # ### end Alembic commands ###
-
-
-def downgrade():
-    # ### commands auto generated by Alembic - please adjust! ###
-    with op.batch_alter_table('user', schema=None) as batch_op:
-        batch_op.drop_column('role')
-
-    # ### end Alembic commands ###
-
 ### migrations/versions/245ea1f5d7a0_přidání_kaskádového_mazání_do_cartitem.py ###
 """Přidání kaskádového mazání do CartItem
 
@@ -666,6 +598,42 @@ def downgrade():
     with op.batch_alter_table('cart_item', schema=None) as batch_op:
         batch_op.drop_constraint(None, type_='foreignkey')
         batch_op.create_foreign_key(None, 'product', ['product_id'], ['id'])
+
+    # ### end Alembic commands ###
+
+### migrations/versions/31f4976b90ce_přidání_sloupce_role_do_tabulky_user.py ###
+"""Přidání sloupce role do tabulky user
+
+Revision ID: 31f4976b90ce
+Revises: 16e82a0195cc
+Create Date: 2025-02-08 23:57:02.884961
+
+"""
+from alembic import op
+import sqlalchemy as sa
+
+
+# revision identifiers, used by Alembic.
+revision = '31f4976b90ce'
+down_revision = '16e82a0195cc'
+branch_labels = None
+depends_on = None
+
+
+def upgrade():
+    # ### commands auto generated by Alembic - please adjust! ###
+    def upgrade():
+        with op.batch_alter_table('user', schema=None) as batch_op:
+             batch_op.alter_column('role', server_default=None)
+
+
+    # ### end Alembic commands ###
+
+
+def downgrade():
+    # ### commands auto generated by Alembic - please adjust! ###
+    with op.batch_alter_table('user', schema=None) as batch_op:
+        batch_op.drop_column('role')
 
     # ### end Alembic commands ###
 
@@ -777,6 +745,42 @@ def downgrade():
     op.drop_table('product')
     # ### end Alembic commands ###
 
+### migrations/versions/b61a4672f274_add_last_name_and_address_to_user.py ###
+"""Add last_name and address to User
+
+Revision ID: b61a4672f274
+Revises: 245ea1f5d7a0
+Create Date: 2025-02-11 01:07:39.314243
+
+"""
+from alembic import op
+import sqlalchemy as sa
+
+
+# revision identifiers, used by Alembic.
+revision = 'b61a4672f274'
+down_revision = '245ea1f5d7a0'
+branch_labels = None
+depends_on = None
+
+
+def upgrade():
+    # ### commands auto generated by Alembic - please adjust! ###
+    with op.batch_alter_table('user', schema=None) as batch_op:
+        batch_op.add_column(sa.Column('last_name', sa.String(length=50), nullable=True))
+        batch_op.add_column(sa.Column('address', sa.String(length=255), nullable=True))
+
+    # ### end Alembic commands ###
+
+
+def downgrade():
+    # ### commands auto generated by Alembic - please adjust! ###
+    with op.batch_alter_table('user', schema=None) as batch_op:
+        batch_op.drop_column('address')
+        batch_op.drop_column('last_name')
+
+    # ### end Alembic commands ###
+
 ### migrations/versions/d73542a2ed07_initial_migration.py ###
 """Initial migration
 
@@ -813,42 +817,6 @@ def upgrade():
 def downgrade():
     # ### commands auto generated by Alembic - please adjust! ###
     op.drop_table('user')
-    # ### end Alembic commands ###
-
-### migrations/versions/b61a4672f274_add_last_name_and_address_to_user.py ###
-"""Add last_name and address to User
-
-Revision ID: b61a4672f274
-Revises: 245ea1f5d7a0
-Create Date: 2025-02-11 01:07:39.314243
-
-"""
-from alembic import op
-import sqlalchemy as sa
-
-
-# revision identifiers, used by Alembic.
-revision = 'b61a4672f274'
-down_revision = '245ea1f5d7a0'
-branch_labels = None
-depends_on = None
-
-
-def upgrade():
-    # ### commands auto generated by Alembic - please adjust! ###
-    with op.batch_alter_table('user', schema=None) as batch_op:
-        batch_op.add_column(sa.Column('last_name', sa.String(length=50), nullable=True))
-        batch_op.add_column(sa.Column('address', sa.String(length=255), nullable=True))
-
-    # ### end Alembic commands ###
-
-
-def downgrade():
-    # ### commands auto generated by Alembic - please adjust! ###
-    with op.batch_alter_table('user', schema=None) as batch_op:
-        batch_op.drop_column('address')
-        batch_op.drop_column('last_name')
-
     # ### end Alembic commands ###
 
 ### migrations/versions/dd00dd5fd781_add_inquiry_model.py ###
@@ -923,6 +891,9 @@ def downgrade():
         batch_op.drop_column('stock')
 
     # ### end Alembic commands ###
+
+### app/.env ###
+WTF_CSRF_SECRET_KEY = 'c0ea893fc51c8912e8f18bbde18cbdd78fe05014f70a2dd94a775a7ed05eb2ce'
 
 ### app/__init__.py ###
 from flask import Flask
@@ -1363,32 +1334,6 @@ content %}
       <td>{{ request.user.username }}</td>
       <td>{{ request.description }}</td>
       <td>{{ request.created_at.strftime('%d.%m.%Y') }}</td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
-{% endblock %}
-
-### app/templates/admin_users.html ###
-{% extends "layout.html" %} {% block title %}Databáze uživatelů{% endblock %} {%
-block content %}
-<h2>👤 Databáze uživatelů</h2>
-<table class="admin-table">
-  <thead>
-    <tr>
-      <th>ID</th>
-      <th>Uživatelské jméno</th>
-      <th>Email</th>
-      <th>Role</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for user in users %}
-    <tr>
-      <td>{{ user.id }}</td>
-      <td>{{ user.username }}</td>
-      <td>{{ user.email }}</td>
-      <td>{{ user.role }}</td>
     </tr>
     {% endfor %}
   </tbody>
@@ -2023,6 +1968,32 @@ content %}
 </body>
 </html>
 
+### app/templates/admin_users.html ###
+{% extends "layout.html" %} {% block title %}Databáze uživatelů{% endblock %} {%
+block content %}
+<h2>👤 Databáze uživatelů</h2>
+<table class="admin-table">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Uživatelské jméno</th>
+      <th>Email</th>
+      <th>Role</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for user in users %}
+    <tr>
+      <td>{{ user.id }}</td>
+      <td>{{ user.username }}</td>
+      <td>{{ user.email }}</td>
+      <td>{{ user.role }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
+
 ### app/templates/login.html ###
 login_html = """ {% extends "layout.html" %} {% block title %}Přihlášení{%
 endblock %} {% block content %}
@@ -2105,101 +2076,6 @@ content %}
 </form>
 
 {% endblock %}
-
-### app/views/cart_routes.py ###
-from flask import Blueprint, request, jsonify, render_template, session
-from flask_login import login_required, current_user
-from app.models import Product, CartItem
-from app import db
-
-cart = Blueprint("cart", __name__, url_prefix="/cart")
-
-# Funkce pro aktualizaci počtu položek v košíku
-def update_cart_count():
-    cart_items = CartItem.query.filter_by(user_id=current_user.id).all()
-    session['cart_item_count'] = sum(item.quantity for item in cart_items)
-
-# Přidání produktu do košíku
-@cart.route('/add', methods=['POST'])
-@login_required
-def add_to_cart():
-    data = request.get_json()
-    product_id = data.get('product_id')
-
-    if not product_id:
-        return jsonify({'message': 'Produkt nebyl nalezen.'}), 400
-
-    product = Product.query.get(product_id)
-    if not product:
-        return jsonify({'message': 'Produkt neexistuje.'}), 404
-
-    # Kontrola dostupnosti na skladě
-    if product.stock <= 0:
-        return jsonify({'message': 'Produkt není skladem.'}), 400
-
-    existing_item = CartItem.query.filter_by(user_id=current_user.id, product_id=product_id).first()
-    if existing_item:
-        if existing_item.quantity < product.stock:
-            existing_item.quantity += 1
-        else:
-            return jsonify({'message': 'Nelze přidat více kusů, než je skladem.'}), 400
-    else:
-        new_item = CartItem(user_id=current_user.id, product_id=product_id, quantity=1)
-        db.session.add(new_item)
-
-    db.session.commit()
-    return jsonify({'message': f'Produkt {product.name} byl přidán do košíku.'}), 200
-
-
-
-
-# Odebrání produktu z košíku
-@cart.route('/remove', methods=['POST'])
-@login_required
-def remove_from_cart():
-    data = request.get_json()
-    product_id = data.get('product_id')
-
-    if not product_id:
-        return jsonify({"error": "Produkt nebyl specifikován."}), 400
-
-    cart_item = CartItem.query.filter_by(user_id=current_user.id, product_id=product_id).first()
-
-    if not cart_item:
-        return jsonify({"error": "Produkt není v košíku."}), 404
-
-    if cart_item.quantity > 1:
-        cart_item.quantity -= 1
-    else:
-        db.session.delete(cart_item)
-
-    db.session.commit()
-    return jsonify({"message": "Produkt byl úspěšně odstraněn z košíku."}), 200
-
-
-# Zobrazení košíku
-@cart.route('/view', methods=['GET'])
-@login_required
-def view_cart():
-    # Odstranění osamocených položek před zobrazením košíku
-    orphaned_items = CartItem.query.filter(~CartItem.product.has()).all()
-    for item in orphaned_items:
-        db.session.delete(item)
-    db.session.commit()
-
-    cart_items = CartItem.query.filter_by(user_id=current_user.id).all()
-    total_price = sum(item.product.price * item.quantity for item in cart_items)
-
-    return render_template('cart.html', cart_items=cart_items, total_price=total_price)
-
-
-# Route pro počet položek v košíku
-@cart.route('/count', methods=['GET'])
-@login_required
-def cart_count():
-    cart_items = CartItem.query.filter_by(user_id=current_user.id).all()
-    cart_item_count = sum(item.quantity for item in cart_items)
-    return jsonify({'cart_item_count': cart_item_count})
 
 ### app/views/admin_routes.py ###
 import os
@@ -2381,6 +2257,101 @@ def delete_product(product_id):
 
     flash("Produkt byl úspěšně smazán!", "success")
     return redirect(url_for("admin.dashboard"))
+
+### app/views/cart_routes.py ###
+from flask import Blueprint, request, jsonify, render_template, session
+from flask_login import login_required, current_user
+from app.models import Product, CartItem
+from app import db
+
+cart = Blueprint("cart", __name__, url_prefix="/cart")
+
+# Funkce pro aktualizaci počtu položek v košíku
+def update_cart_count():
+    cart_items = CartItem.query.filter_by(user_id=current_user.id).all()
+    session['cart_item_count'] = sum(item.quantity for item in cart_items)
+
+# Přidání produktu do košíku
+@cart.route('/add', methods=['POST'])
+@login_required
+def add_to_cart():
+    data = request.get_json()
+    product_id = data.get('product_id')
+
+    if not product_id:
+        return jsonify({'message': 'Produkt nebyl nalezen.'}), 400
+
+    product = Product.query.get(product_id)
+    if not product:
+        return jsonify({'message': 'Produkt neexistuje.'}), 404
+
+    # Kontrola dostupnosti na skladě
+    if product.stock <= 0:
+        return jsonify({'message': 'Produkt není skladem.'}), 400
+
+    existing_item = CartItem.query.filter_by(user_id=current_user.id, product_id=product_id).first()
+    if existing_item:
+        if existing_item.quantity < product.stock:
+            existing_item.quantity += 1
+        else:
+            return jsonify({'message': 'Nelze přidat více kusů, než je skladem.'}), 400
+    else:
+        new_item = CartItem(user_id=current_user.id, product_id=product_id, quantity=1)
+        db.session.add(new_item)
+
+    db.session.commit()
+    return jsonify({'message': f'Produkt {product.name} byl přidán do košíku.'}), 200
+
+
+
+
+# Odebrání produktu z košíku
+@cart.route('/remove', methods=['POST'])
+@login_required
+def remove_from_cart():
+    data = request.get_json()
+    product_id = data.get('product_id')
+
+    if not product_id:
+        return jsonify({"error": "Produkt nebyl specifikován."}), 400
+
+    cart_item = CartItem.query.filter_by(user_id=current_user.id, product_id=product_id).first()
+
+    if not cart_item:
+        return jsonify({"error": "Produkt není v košíku."}), 404
+
+    if cart_item.quantity > 1:
+        cart_item.quantity -= 1
+    else:
+        db.session.delete(cart_item)
+
+    db.session.commit()
+    return jsonify({"message": "Produkt byl úspěšně odstraněn z košíku."}), 200
+
+
+# Zobrazení košíku
+@cart.route('/view', methods=['GET'])
+@login_required
+def view_cart():
+    # Odstranění osamocených položek před zobrazením košíku
+    orphaned_items = CartItem.query.filter(~CartItem.product.has()).all()
+    for item in orphaned_items:
+        db.session.delete(item)
+    db.session.commit()
+
+    cart_items = CartItem.query.filter_by(user_id=current_user.id).all()
+    total_price = sum(item.product.price * item.quantity for item in cart_items)
+
+    return render_template('cart.html', cart_items=cart_items, total_price=total_price)
+
+
+# Route pro počet položek v košíku
+@cart.route('/count', methods=['GET'])
+@login_required
+def cart_count():
+    cart_items = CartItem.query.filter_by(user_id=current_user.id).all()
+    cart_item_count = sum(item.quantity for item in cart_items)
+    return jsonify({'cart_item_count': cart_item_count})
 
 ### app/views/routes.py ###
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify

@@ -19,5 +19,8 @@ class Config:
     MAIL_SERVER = 'smtp.gmail.com'  # Gmail SMTP
     MAIL_PORT = 587                 # TLS port
     MAIL_USE_TLS = True
-    MAIL_USERNAME = 'artemodernoblaha@gmail.com'  # Váš e-mail
-    MAIL_PASSWORD = 'qxunfbtnyvefainm'  # App Password pro Gmail
+    # MAIL_USERNAME = 'artemodernoblaha@gmail.com'  # Váš e-mail
+    # MAIL_PASSWORD = 'qxunfbtnyvefainm'  # App Password pro Gmail
+
+    MAIL_USERNAME = os.getenv(MAIL_USERNAME)
+    MAIL_PASSWORD = os.getenv(MAIL_PASSWORD)
