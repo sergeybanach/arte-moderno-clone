@@ -1,3 +1,25 @@
+### .gitignore ###
+.venv
+__pycache__
+.env
+instance
+
+### README.md ###
+### update/add .gitignore
+
+```txt
+.venv
+__pycache__
+.env
+instance
+```
+
+### run this commands
+```bash
+git rm -r --cached .
+git add .
+```
+
 ### .env ###
 # export SECRET_KEY="your-secret-key"
 # export DATABASE_URL="sqlite:///arte_moderno.db"
@@ -13,12 +35,6 @@ MAIL_USERNAME=artemodernoblaha@gmail.com
 MAIL_PASSWORD=qxunfbtnyvefainm
 
 # DATABASE_URL=postgresql://postgres:205800@localhost:5432/artemoderno
-
-### .gitignore ###
-.venv
-__pycache__
-.env
-instance
 
 ### __requirements.txt ###
 alembic==1.14.1
@@ -58,22 +74,6 @@ SQLAlchemy==2.0.37
 sympy==1.13.1
 tokenizers==0.21.0
 torch==2.5.1
-
-### README.md ###
-### update/add .gitignore
-
-```txt
-.venv
-__pycache__
-.env
-instance
-```
-
-### run this commands
-```bash
-git rm -r --cached .
-git add .
-```
 
 ### bundleFiles.js ###
 const fs = require('node:fs/promises');
@@ -250,6 +250,9 @@ app = create_app()
 if __name__ == '__main__':
     app.run(debug=True)
 
+### migrations/README ###
+Single-database configuration for Flask.
+
 ### migrations/alembic.ini ###
 # A generic, single database configuration.
 
@@ -301,9 +304,6 @@ formatter = generic
 [formatter_generic]
 format = %(levelname)-5.5s [%(name)s] %(message)s
 datefmt = %H:%M:%S
-
-### migrations/README ###
-Single-database configuration for Flask.
 
 ### migrations/env.py ###
 import logging
@@ -689,6 +689,1010 @@ class CartItem(db.Model):
     def __repr__(self):
         return f"<CartItem User {self.user_id}, Product {self.product_id}, Qty {self.quantity}>"
 
+### app/templates/add_product.html ###
+<form
+  method="POST"
+  action="{{ url_for('admin.add_product') }}"
+  enctype="multipart/form-data"
+>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+  <label for="position_id">ID pozice:</label>
+  <input
+    type="number"
+    name="position_id"
+    id="position_id"
+    required
+  /><br /><br />
+
+  <label for="name">Název produktu:</label>
+  <input type="text" name="name" id="name" required /><br /><br />
+
+  <label for="price">Cena (Kč):</label>
+  <input
+    type="number"
+    step="0.01"
+    name="price"
+    id="price"
+    required
+  /><br /><br />
+
+  <label for="stock">Počet kusů na skladě:</label>
+  <input type="number" name="stock" id="stock" required /><br /><br />
+
+  <label for="description">Popis:</label><br />
+  <textarea name="description" id="description" rows="4"></textarea><br /><br />
+
+  <label for="image">Obrázek produktu:</label>
+  <input type="file" name="image" id="image" accept="image/*" /><br /><br />
+
+  <button type="submit">Přidat produkt</button>
+</form>
+
+<a href="{{ url_for('admin.dashboard') }}">
+  <button>⬅️ Zpět na admin panel</button>
+</a>
+
+### app/templates/admin.html ###
+{% extends "layout.html" %} {% block title %}Admin Přihlášení{% endblock %} {%
+block content %}
+<h1>Admin Přihlášení</h1>
+<form method="POST" action="{{ url_for('admin.login') }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> <!-- CSRF token -->
+
+  <label for="username">Uživatelské jméno:</label>
+  <input type="text" name="username" id="username" required /><br /><br />
+
+  <label for="password">Heslo:</label>
+  <input type="password" name="password" id="password" required /><br /><br />
+
+  <button type="submit">Přihlásit</button>
+</form>
+{% endblock %}
+
+### app/templates/admin_dashboard.html ###
+{% extends "layout.html" %} {% block title %}Admin Panel{% endblock %} {% block
+content %}
+<h2>Admin Panel - ArteModerno</h2>
+
+<!-- Odkaz na odhlášení -->
+<a href="{{ url_for('admin.logout') }}" class="btn-logout">🚪 Odhlásit se</a>
+
+<!-- Sekce pro správu produktů -->
+<h3>Správa produktů</h3>
+<a href="{{ url_for('admin.add_product') }}" class="btn-add-product"
+  >➕ Přidat nový produkt</a
+>
+
+<!-- Tabulka produktů -->
+<table class="admin-table">
+  <thead>
+    <tr>
+      <th>Obrázek</th>
+      <th>ID</th>
+      <th>Název</th>
+      <th>Cena</th>
+      <th>Akce</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for product in products %}
+    <tr>
+      <td>
+        {% if product.image_filename %}
+        <img
+          src="{{ url_for('static', filename='uploads/' ~ product.image_filename) }}"
+          alt="{{ product.name }}"
+          class="product-thumbnail"
+        />
+        {% else %}
+        <span>Žádný obrázek</span>
+        {% endif %}
+      </td>
+      <td>{{ product.position_id }}</td>
+      <td>{{ product.name }}</td>
+      <td>{{ product.price }} Kč</td>
+      <td class="actions">
+        <a
+          href="{{ url_for('admin.edit_product', product_id=product.id) }}"
+          class="btn-edit"
+          >✏️ Upravit</a
+        >
+        <form
+          method="POST"
+          action="{{ url_for('admin.delete_product', product_id=product.id) }}"
+          class="delete-form"
+        >
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+          <button
+            type="submit"
+            class="btn-delete"
+            onclick="return confirm('Opravdu chcete smazat tento produkt?')"
+          >
+            🗑️ Smazat
+          </button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<!-- Styly -->
+<style>
+  h2,
+  h3 {
+    color: #333;
+    text-align: center;
+    margin-bottom: 20px;
+  }
+
+  .btn-logout,
+  .btn-add-product {
+    display: inline-block;
+    margin-bottom: 20px;
+    padding: 10px 15px;
+    background-color: #dc3545;
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+  }
+
+  .btn-add-product {
+    background-color: #28a745;
+  }
+
+  .btn-logout:hover,
+  .btn-add-product:hover {
+    opacity: 0.9;
+  }
+
+  .admin-table {
+    width: 66%; /* Zmenšení šířky tabulky na 2/3 */
+    border-collapse: collapse;
+    margin: 0 auto; /* Centrovaní tabulky */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .admin-table th,
+  .admin-table td {
+    border: 1px solid #ddd;
+    padding: 10px; /* Menší padding pro kompaktní vzhled */
+    text-align: center;
+  }
+
+  .admin-table th {
+    background-color: #f4f4f4;
+    color: #333;
+  }
+
+  .product-thumbnail {
+    width: 40px; /* Menší obrázky pro lepší přehlednost */
+    height: auto;
+    border-radius: 5px;
+  }
+
+  .actions a,
+  .actions button {
+    margin: 3px;
+    padding: 5px 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    text-decoration: none;
+  }
+
+  .btn-edit {
+    background-color: #007bff;
+    color: white;
+  }
+
+  .btn-edit:hover {
+    background-color: #0056b3;
+  }
+
+  .btn-delete {
+    background-color: #dc3545;
+    color: white;
+  }
+
+  .btn-delete:hover {
+    background-color: #a71d2a;
+  }
+
+  .delete-form {
+    display: inline;
+  }
+</style>
+
+{% endblock %}
+
+### app/templates/admin_orders.html ###
+{% extends "layout.html" %} {% block title %}Objednávky{% endblock %} {% block
+content %}
+<h2>🛒 Objednávky</h2>
+<table class="admin-table">
+  <thead>
+    <tr>
+      <th>ID Objednávky</th>
+      <th>Uživatel</th>
+      <th>Produkty</th>
+      <th>Celková cena</th>
+      <th>Datum</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for order in orders %}
+    <tr>
+      <td>{{ order.id }}</td>
+      <td>{{ order.user.username }}</td>
+      <td>
+        <ul>
+          {% for item in order.items %}
+          <li>{{ item.product.name }} ({{ item.quantity }} ks)</li>
+          {% endfor %}
+        </ul>
+      </td>
+      <td>{{ order.total_price }} Kč</td>
+      <td>{{ order.created_at.strftime('%d.%m.%Y') }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
+
+### app/templates/admin_users.html ###
+{% extends "layout.html" %} {% block title %}Databáze uživatelů{% endblock %} {%
+block content %}
+<h2>👤 Databáze uživatelů</h2>
+<table class="admin-table">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Uživatelské jméno</th>
+      <th>Email</th>
+      <th>Role</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for user in users %}
+    <tr>
+      <td>{{ user.id }}</td>
+      <td>{{ user.username }}</td>
+      <td>{{ user.email }}</td>
+      <td>{{ user.role }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
+
+### app/templates/admin_requests.html ###
+{% extends "layout.html" %} {% block title %}Požadavky{% endblock %} {% block
+content %}
+<h2>📩 Požadavky</h2>
+<table class="admin-table">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Uživatel</th>
+      <th>Popis</th>
+      <th>Datum</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for request in requests %}
+    <tr>
+      <td>{{ request.id }}</td>
+      <td>{{ request.user.username }}</td>
+      <td>{{ request.description }}</td>
+      <td>{{ request.created_at.strftime('%d.%m.%Y') }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
+
+### app/templates/cart.html ###
+{% extends "layout.html" %} {% block title %}Košík{% endblock %} {% block
+content %}
+<div class="cart-wrapper">
+  <h1>Váš košík</h1>
+
+  <div class="cart-container">
+    {% if cart_items %}
+    <table class="cart-table">
+      <thead>
+        <tr>
+          <th>Obrázek</th>
+          <th>Produkt</th>
+          <th>Cena za kus</th>
+          <th>Množství</th>
+          <th>Celková cena</th>
+          <th>Akce</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in cart_items %}
+        <tr class="cart-item-row" data-product-id="{{ item.product.id }}">
+          <td class="image-cell">
+            {% if item.product.image_filename %}
+            <div class="image-container">
+              <img
+                src="{{ url_for('static', filename='uploads/' ~ item.product.image_filename) }}"
+                alt="{{ item.product.name }}"
+                class="product-thumbnail"
+              />
+            </div>
+            {% else %}
+            <div class="image-container no-image">
+              <span>Žádný obrázek</span>
+            </div>
+            {% endif %}
+          </td>
+          <td>{{ item.product.name }}</td>
+          <td>{{ item.product.price }} Kč</td>
+          <td>{{ item.quantity }}</td>
+          <td>{{ item.product.price * item.quantity }} Kč</td>
+          <td>
+            <button
+              class="remove-from-cart btn-delete"
+              data-product-id="{{ item.product.id }}"
+            >
+              🗑️ Odebrat
+            </button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <div class="cart-summary">
+      <h2>Celkem: {{ total_price }} Kč</h2>
+      <a href="{{ url_for('views.galerie') }}" class="btn-continue"
+        >Pokračovat v nakupování</a
+      >
+    </div>
+    {% else %}
+    <div class="empty-cart">
+      <p>Váš košík je prázdný.</p>
+      <a href="{{ url_for('views.galerie') }}" class="btn-continue"
+        >Přejít do galerie</a
+      >
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<style>
+  .cart-wrapper {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+
+  h1 {
+    color: #333;
+    text-align: center;
+    margin-bottom: 20px;
+  }
+
+  .cart-container {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+  }
+
+  .cart-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+  }
+
+  .cart-table th,
+  .cart-table td {
+    border: 1px solid #ddd;
+    padding: 12px;
+    text-align: center;
+  }
+
+  .cart-table th {
+    background-color: #f4f4f4;
+    color: #333;
+    font-weight: 600;
+  }
+
+  /* Styly pro obrázky */
+  .image-cell {
+    width: 60px;
+    height: 60px;
+    padding: 4px !important;
+  }
+
+  .image-container {
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .no-image {
+    background-color: #e9ecef;
+    color: #6c757d;
+    font-size: 0.8em;
+  }
+
+  .product-thumbnail {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    display: block;
+  }
+
+  /* Tlačítka a akce */
+  .btn-delete {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+
+  .btn-delete:hover {
+    background-color: #c82333;
+  }
+
+  .cart-summary {
+    text-align: right;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 2px solid #eee;
+  }
+
+  .cart-summary h2 {
+    color: #333;
+    margin-bottom: 15px;
+  }
+
+  .btn-continue {
+    display: inline-block;
+    background-color: #28a745;
+    color: white;
+    padding: 10px 20px;
+    text-decoration: none;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+  }
+
+  .btn-continue:hover {
+    background-color: #218838;
+  }
+
+  .empty-cart {
+    text-align: center;
+    padding: 40px 20px;
+  }
+
+  .empty-cart p {
+    color: #666;
+    margin-bottom: 20px;
+    font-size: 1.1em;
+  }
+</style>
+
+<script src="{{ url_for('static', filename='js/cart.js') }}"></script>
+{% endblock %}
+
+### app/templates/edit_product.html ###
+{% extends "layout.html" %} {% block title %}Upravit produkt{% endblock %} {%
+block content %}
+<h2>Upravit produkt</h2>
+
+<!-- Flash zprávy -->
+{% with messages = get_flashed_messages(with_categories=true) %} {% if messages
+%}
+<ul>
+  {% for category, message in messages %}
+  <li class="alert-{{ category }}">{{ message }}</li>
+  {% endfor %}
+</ul>
+{% endif %} {% endwith %}
+
+<!-- Formulář pro úpravu produktu -->
+<form
+  method="POST"
+  action="{{ url_for('admin.edit_product', product_id=product.id) }}"
+  enctype="multipart/form-data"
+>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+  <!-- CSRF token -->
+  <label for="position_id">ID pozice:</label>
+  <input
+    type="number"
+    name="position_id"
+    id="position_id"
+    value="{{ product.position_id }}"
+    required
+  /><br /><br />
+
+  <label for="name">Název produktu:</label>
+  <input
+    type="text"
+    name="name"
+    id="name"
+    value="{{ product.name }}"
+    required
+  /><br /><br />
+
+  <label for="price">Cena (Kč):</label>
+  <input
+    type="number"
+    step="0.01"
+    name="price"
+    id="price"
+    value="{{ product.price }}"
+    required
+  /><br /><br />
+
+  <label for="description">Popis:</label><br />
+  <textarea name="description" id="description" rows="4">
+{{ product.description }}</textarea
+  ><br /><br />
+
+  <!-- Zobrazení aktuálního obrázku -->
+  {% if product.image_filename %}
+  <p>Aktuální obrázek:</p>
+  <img
+    src="{{ product.get_image_url() }}"
+    alt="{{ product.name }}"
+    style="max-width: 200px"
+  /><br /><br />
+
+  <!-- Možnost smazat obrázek -->
+  <input type="checkbox" name="delete_image" id="delete_image" />
+  <label for="delete_image">Smazat aktuální obrázek</label><br /><br />
+  {% endif %}
+
+  <!-- Nahrání nového obrázku -->
+  <label for="image">Nahrát nový obrázek:</label>
+  <input type="file" name="image" id="image" accept="image/*" /><br /><br />
+
+  <button type="submit">Uložit změny</button>
+</form>
+
+<a href="{{ url_for('admin.dashboard') }}">⬅️ Zpět na dashboard</a>
+{% endblock %}
+
+### app/templates/galerie.html ###
+{% extends "layout.html" %}
+{% block title %}Galerie{% endblock %}
+
+{% block content %}
+<h1 class="gallery-heading">Galerie</h1>
+
+<div class="gallery-container">
+  {% for product in products %}
+  <div class="gallery-item {% if loop.index % 2 == 0 %}reverse{% endif %}">
+    <div class="gallery-image">
+      <div class="image-frame">
+        <img src="{{ product.get_image_url() }}" alt="{{ product.name }}">
+      </div>
+    </div>
+    <div class="gallery-info">
+      <h3>{{ product.name }}</h3>
+      <p class="gallery-description">{{ product.description or 'Žádný popis není dostupný' }}</p>
+      <p class="gallery-price"><strong>{{ product.price }} Kč</strong></p>
+      <p class="gallery-stock">
+        {% if product.stock > 0 %}
+          <strong>Skladem: {{ product.stock }} kus(ů)</strong>
+        {% else %}
+          <strong class="out-of-stock">Vyprodáno</strong>
+        {% endif %}
+      </p>
+      <button class="buy-button" data-product-id="{{ product.id }}" {% if product.stock == 0 %}disabled{% endif %}>
+        🛒 Koupit
+      </button>
+    </div>
+  </div>
+  {% else %}
+  <p class="empty-gallery-message">Zatím zde nejsou žádné produkty.</p>
+  {% endfor %}
+</div>
+
+<style>
+  .gallery-heading {
+    text-align: center;
+    font-size: 2.5rem;
+    margin-bottom: 40px;
+    color: #333;
+  }
+
+  .gallery-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
+    padding: 20px;
+  }
+
+  .gallery-item {
+    background-color: #fff;
+    border-radius: 16px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    transition: transform 0.3s ease;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .gallery-item:hover {
+    transform: translateY(-5px);
+  }
+
+  .gallery-image {
+    width: 100%;
+    height: 250px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #f8f8f8;
+  }
+
+  .gallery-image img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: cover;
+    border-radius: 8px;
+  }
+
+  .gallery-info {
+    padding: 20px;
+    text-align: center;
+  }
+
+  .gallery-info h3 {
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+    color: #444;
+  }
+
+  .gallery-description {
+    font-size: 1rem;
+    color: #666;
+    margin-bottom: 15px;
+  }
+
+  .gallery-price {
+    font-size: 1.2rem;
+    color: #222;
+    margin-bottom: 10px;
+  }
+
+  .gallery-stock {
+    font-size: 1rem;
+    color: #28a745;
+    margin-bottom: 15px;
+  }
+
+  .gallery-stock .out-of-stock {
+    color: #dc3545;
+  }
+
+  .buy-button {
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+
+  .buy-button:hover {
+    background-color: #0056b3;
+  }
+
+  .buy-button[disabled] {
+    background-color: #ccc;
+    cursor: not-allowed;
+  }
+
+  .empty-gallery-message {
+    text-align: center;
+    font-size: 1.2rem;
+    color: #666;
+  }
+
+  @media (max-width: 600px) {
+    .gallery-heading {
+      font-size: 2rem;
+    }
+
+    .gallery-item {
+      flex-direction: column;
+    }
+  }
+</style>
+
+<script src="{{ url_for('static', filename='js/cart.js') }}"></script>
+{% endblock %}
+
+Lorem ipsum dolor sit amet, consectetur adipisicing elit. Veniam doloremque ad necessitatibus fuga, nihil porro laborum, at ratione minus ea molestiae alias reiciendis error itaque natus eveniet in, quisquam eos.
+
+### app/templates/home.html ###
+{% extends 'layout.html' %}
+{% block title %}Domů{% endblock %}
+{% block content %}
+<div class="hero-section">
+  <div class="hero-text">
+    <h1 class="main-title">Umění, které promlouvá</h1>
+    <p class="subtitle">Objevte jedinečné umělecké skvosty pro váš prostor</p>
+  </div>
+</div>
+
+<div class="home-gallery-container">
+  <div class="home-gallery-flex">
+    {% for product in products %}
+    <div class="gallery-item">
+      <img
+        src="{{ product.get_image_url() }}"
+        alt="{{ product.name }}"
+      />
+    </div>
+    {% else %}
+    <div class="gallery-item">
+      <p>Žádné produkty nebyly nalezeny.</p>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
+
+### app/templates/kontakt.html ###
+{% extends "layout.html" %} {% block title %}Kontakt{% endblock %} {% block
+content %}
+<h1>Kontakt</h1>
+
+<form method="POST" action="{{ url_for('views.kontakt') }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> <!-- CSRF token -->
+
+  <label for="name">Jméno:</label>
+  <input type="text" id="name" name="name" required /><br /><br />
+
+  <label for="email">E-mail:</label>
+  <input type="email" id="email" name="email" required /><br /><br />
+
+  <label for="subject">Předmět:</label>
+  <input type="text" id="subject" name="subject" /><br /><br />
+
+  <label for="message">Zpráva:</label><br />
+  <textarea id="message" name="message" rows="5" cols="40" required></textarea><br /><br />
+
+  <button type="submit">Odeslat</button>
+</form>
+
+</form>
+{% endblock %}
+
+### app/templates/layout.html ###
+<!DOCTYPE html>
+<html lang="cs">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="csrf-token" content="{{ csrf_token() }}" />
+
+    <title>ArtModerno | {% block title %}{% endblock %}</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/main.css') }}"
+    />
+    <style>
+      .flash-container {
+        position: fixed;
+        top: 10px;
+        right: 10px;
+        width: 300px;
+        z-index: 1000;
+      }
+      .flash-message {
+        padding: 15px;
+        margin-bottom: 10px;
+        border-radius: 5px;
+        color: white;
+        font-weight: bold;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        animation: fadeIn 0.5s ease-in-out;
+      }
+      .alert-success {
+        background-color: #28a745;
+      }
+      .alert-error {
+        background-color: #dc3545;
+      }
+      .alert-info {
+        background-color: #17a2b8;
+      }
+      .alert-warning {
+        background-color: #ffc107;
+        color: black;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(-10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    {% include "navbar.html" %}
+    <div class="flash-container">
+      {% with messages = get_flashed_messages(with_categories=true) %} {% if
+      messages %} {% for category, message in messages %}
+      <div class="flash-message alert-{{ category }}">{{ message }}</div>
+      {% endfor %} {% endif %} {% endwith %}
+    </div>
+    <main class="main-content">{% block content %}{% endblock %}</main>
+    <footer class="footer">
+      <div class="footer-content">
+        <p class="footer-text">© 2025 Arte Moderno. Všechna práva vyhrazena.</p>
+        <div class="social-links">
+          <a href="#" class="social-link">
+            <img
+              src="{{ url_for('static', filename='logo/facebook.svg') }}"
+              alt="Facebook"
+            />
+          </a>
+          <a href="#" class="social-link">
+            <img
+              src="{{ url_for('static', filename='logo/skill-icons_instagram.svg') }}"
+              alt="Instagram"
+            />
+          </a>
+          <a href="#" class="social-link">
+            <img
+              src="{{ url_for('static', filename='logo/x.svg') }}"
+              alt="Twitter/X"
+            />
+          </a>
+        </div>
+      </div>
+    </footer>
+    <script>
+      setTimeout(function () {
+        const flashMessages = document.querySelectorAll(".flash-message");
+        flashMessages.forEach((msg) => {
+          msg.style.opacity = "0";
+          setTimeout(() => msg.remove(), 500);
+        });
+      }, 5000);
+
+      // Ensure CSRF token is globally available
+      window.CSRF_TOKEN = document
+        .querySelector('meta[name="csrf-token"]')
+        .getAttribute("content");
+    </script>
+  </body>
+</html>
+
+### app/templates/list_inquiries.html ###
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Seznam dotazů</title>
+</head>
+<body>
+    <h1>Seznam dotazů v DB</h1>
+    <ul>
+    {% for i in inquiries %}
+        <li>
+            <strong>{{ i.name }}</strong> 
+            ({{ i.email }})<br>
+            Předmět: {{ i.subject }}<br>
+            Zpráva: {{ i.message }}<br>
+            <em>vloženo: {{ i.created_at }}</em>
+        </li>
+        <hr>
+    {% endfor %}
+    </ul>
+</body>
+</html>
+
+### app/templates/login.html ###
+login_html = """ {% extends "layout.html" %} {% block title %}Přihlášení{%
+endblock %} {% block content %}
+<h1>Přihlášení</h1>
+<form method="POST" action="{{ url_for('views.login') }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> <!-- CSRF token -->
+
+  <label for="email">E-mail:</label>
+  <input type="email" name="email" id="email" required /><br /><br />
+
+  <label for="password">Heslo:</label>
+  <input type="password" name="password" id="password" required /><br /><br />
+
+  <button type="submit">Přihlásit</button>
+</form>
+<p>
+  Nemáte ještě účet?
+  <a href="{{ url_for('views.register') }}">Zaregistrujte se</a>.
+</form>
+{% endblock %}
+
+### app/templates/navbar.html ###
+<nav class="navbar">
+  <div class="navbar-logo">
+    <a href="{{ url_for('views.home') }}">
+      <img
+        src="{{ url_for('static', filename='logo/Logo_4_svg.svg') }}"
+        alt="ArtModerno Logo"
+      />
+    </a>
+  </div>
+
+  <div class="navbar-links">
+    <a href="{{ url_for('views.home') }}" class="nav-link">Home</a>
+    <a href="{{ url_for('views.galerie') }}" class="nav-link">Galerie</a>
+    <a href="{{ url_for('views.kontakt') }}" class="nav-link">Kontakt</a>
+
+    {% if current_user.is_authenticated %} {% if current_user.role == 'admin' %}
+    <a href="{{ url_for('admin.dashboard') }}" class="nav-link">Admin Panel</a>
+    {% else %}
+    <!-- Ikona košíku pro běžné uživatele -->
+    <a href="{{ url_for('cart.view_cart') }}" class="nav-link cart-icon">
+      🛒 <span id="cart-count">{{ cart_item_count }}</span>
+    </a>
+    {% endif %}
+    <a href="{{ url_for('views.logout') }}" class="nav-link">Odhlásit se</a>
+    {% else %}
+    <a href="{{ url_for('views.register') }}" class="nav-link">Registrace</a>
+    <a href="{{ url_for('views.login') }}" class="nav-link">Přihlášení</a>
+    {% endif %}
+  </div>
+</nav>
+
+### app/templates/register.html ###
+{% extends "layout.html" %} {% block title %}Registrace{% endblock %} {% block
+content %}
+<h1>Registrace</h1>
+<form method="POST" action="{{ url_for('views.register') }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+  <!-- CSRF token -->
+
+  <label for="username">Uživatelské jméno:</label>
+  <input type="text" name="username" id="username" required /><br /><br />
+
+  <label for="email">E-mail:</label>
+  <input type="email" name="email" id="email" required /><br /><br />
+
+  <label for="password">Heslo:</label>
+  <input type="password" name="password" id="password" required /><br /><br />
+
+  <label for="confirm_password">Potvrzení hesla:</label>
+  <input
+    type="password"
+    name="confirm_password"
+    id="confirm_password"
+    required
+  /><br /><br />
+
+  <button type="submit">Registrovat</button>
+</form>
+
+{% endblock %}
+
 ### app/views/admin_routes.py ###
 import os
 from flask import current_app, Blueprint, render_template, request, redirect, url_for, flash, session
@@ -983,7 +1987,8 @@ cart = Blueprint("cart", __name__, url_prefix="/cart")
 
 @views.route("/", methods=["GET"])
 def home():
-    return render_template("home.html")  # jen příklad
+    products = Product.query.limit(4).all()  # You can limit this with .limit(4) if you only want 4 items
+    return render_template("home.html", products=products)
 
 @views.route("/galerie")
 def galerie():
@@ -1161,1020 +2166,102 @@ def view_cart():
 
     return jsonify(cart_data), 200
 
-### app/templates/add_product.html ###
-<form
-  method="POST"
-  action="{{ url_for('admin.add_product') }}"
-  enctype="multipart/form-data"
->
-  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+### app/static/JS/cart.js ###
+// Načtení CSRF tokenu z meta tagu
+const csrfToken = document
+  .querySelector('meta[name="csrf-token"]')
+  ?.getAttribute("content");
 
-  <label for="position_id">ID pozice:</label>
-  <input
-    type="number"
-    name="position_id"
-    id="position_id"
-    required
-  /><br /><br />
-
-  <label for="name">Název produktu:</label>
-  <input type="text" name="name" id="name" required /><br /><br />
-
-  <label for="price">Cena (Kč):</label>
-  <input
-    type="number"
-    step="0.01"
-    name="price"
-    id="price"
-    required
-  /><br /><br />
-
-  <label for="stock">Počet kusů na skladě:</label>
-  <input type="number" name="stock" id="stock" required /><br /><br />
-
-  <label for="description">Popis:</label><br />
-  <textarea name="description" id="description" rows="4"></textarea><br /><br />
-
-  <label for="image">Obrázek produktu:</label>
-  <input type="file" name="image" id="image" accept="image/*" /><br /><br />
-
-  <button type="submit">Přidat produkt</button>
-</form>
-
-<a href="{{ url_for('admin.dashboard') }}">
-  <button>⬅️ Zpět na admin panel</button>
-</a>
-
-### app/templates/admin.html ###
-{% extends "layout.html" %} {% block title %}Admin Přihlášení{% endblock %} {%
-block content %}
-<h1>Admin Přihlášení</h1>
-<form method="POST" action="{{ url_for('admin.login') }}">
-  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> <!-- CSRF token -->
-
-  <label for="username">Uživatelské jméno:</label>
-  <input type="text" name="username" id="username" required /><br /><br />
-
-  <label for="password">Heslo:</label>
-  <input type="password" name="password" id="password" required /><br /><br />
-
-  <button type="submit">Přihlásit</button>
-</form>
-{% endblock %}
-
-### app/templates/admin_dashboard.html ###
-{% extends "layout.html" %} {% block title %}Admin Panel{% endblock %} {% block
-content %}
-<h2>Admin Panel - ArteModerno</h2>
-
-<!-- Odkaz na odhlášení -->
-<a href="{{ url_for('admin.logout') }}" class="btn-logout">🚪 Odhlásit se</a>
-
-<!-- Sekce pro správu produktů -->
-<h3>Správa produktů</h3>
-<a href="{{ url_for('admin.add_product') }}" class="btn-add-product"
-  >➕ Přidat nový produkt</a
->
-
-<!-- Tabulka produktů -->
-<table class="admin-table">
-  <thead>
-    <tr>
-      <th>Obrázek</th>
-      <th>ID</th>
-      <th>Název</th>
-      <th>Cena</th>
-      <th>Akce</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for product in products %}
-    <tr>
-      <td>
-        {% if product.image_filename %}
-        <img
-          src="{{ url_for('static', filename='uploads/' ~ product.image_filename) }}"
-          alt="{{ product.name }}"
-          class="product-thumbnail"
-        />
-        {% else %}
-        <span>Žádný obrázek</span>
-        {% endif %}
-      </td>
-      <td>{{ product.position_id }}</td>
-      <td>{{ product.name }}</td>
-      <td>{{ product.price }} Kč</td>
-      <td class="actions">
-        <a
-          href="{{ url_for('admin.edit_product', product_id=product.id) }}"
-          class="btn-edit"
-          >✏️ Upravit</a
-        >
-        <form
-          method="POST"
-          action="{{ url_for('admin.delete_product', product_id=product.id) }}"
-          class="delete-form"
-        >
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-          <button
-            type="submit"
-            class="btn-delete"
-            onclick="return confirm('Opravdu chcete smazat tento produkt?')"
-          >
-            🗑️ Smazat
-          </button>
-        </form>
-      </td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
-
-<!-- Styly -->
-<style>
-  h2,
-  h3 {
-    color: #333;
-    text-align: center;
-    margin-bottom: 20px;
-  }
-
-  .btn-logout,
-  .btn-add-product {
-    display: inline-block;
-    margin-bottom: 20px;
-    padding: 10px 15px;
-    background-color: #dc3545;
-    color: white;
-    text-decoration: none;
-    border-radius: 5px;
-  }
-
-  .btn-add-product {
-    background-color: #28a745;
-  }
-
-  .btn-logout:hover,
-  .btn-add-product:hover {
-    opacity: 0.9;
-  }
-
-  .admin-table {
-    width: 66%; /* Zmenšení šířky tabulky na 2/3 */
-    border-collapse: collapse;
-    margin: 0 auto; /* Centrovaní tabulky */
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  }
-
-  .admin-table th,
-  .admin-table td {
-    border: 1px solid #ddd;
-    padding: 10px; /* Menší padding pro kompaktní vzhled */
-    text-align: center;
-  }
-
-  .admin-table th {
-    background-color: #f4f4f4;
-    color: #333;
-  }
-
-  .product-thumbnail {
-    width: 40px; /* Menší obrázky pro lepší přehlednost */
-    height: auto;
-    border-radius: 5px;
-  }
-
-  .actions a,
-  .actions button {
-    margin: 3px;
-    padding: 5px 10px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    text-decoration: none;
-  }
-
-  .btn-edit {
-    background-color: #007bff;
-    color: white;
-  }
-
-  .btn-edit:hover {
-    background-color: #0056b3;
-  }
-
-  .btn-delete {
-    background-color: #dc3545;
-    color: white;
-  }
-
-  .btn-delete:hover {
-    background-color: #a71d2a;
-  }
-
-  .delete-form {
-    display: inline;
-  }
-</style>
-
-{% endblock %}
-
-### app/templates/admin_requests.html ###
-{% extends "layout.html" %} {% block title %}Požadavky{% endblock %} {% block
-content %}
-<h2>📩 Požadavky</h2>
-<table class="admin-table">
-  <thead>
-    <tr>
-      <th>ID</th>
-      <th>Uživatel</th>
-      <th>Popis</th>
-      <th>Datum</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for request in requests %}
-    <tr>
-      <td>{{ request.id }}</td>
-      <td>{{ request.user.username }}</td>
-      <td>{{ request.description }}</td>
-      <td>{{ request.created_at.strftime('%d.%m.%Y') }}</td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
-{% endblock %}
-
-### app/templates/admin_users.html ###
-{% extends "layout.html" %} {% block title %}Databáze uživatelů{% endblock %} {%
-block content %}
-<h2>👤 Databáze uživatelů</h2>
-<table class="admin-table">
-  <thead>
-    <tr>
-      <th>ID</th>
-      <th>Uživatelské jméno</th>
-      <th>Email</th>
-      <th>Role</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for user in users %}
-    <tr>
-      <td>{{ user.id }}</td>
-      <td>{{ user.username }}</td>
-      <td>{{ user.email }}</td>
-      <td>{{ user.role }}</td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
-{% endblock %}
-
-### app/templates/admin_orders.html ###
-{% extends "layout.html" %} {% block title %}Objednávky{% endblock %} {% block
-content %}
-<h2>🛒 Objednávky</h2>
-<table class="admin-table">
-  <thead>
-    <tr>
-      <th>ID Objednávky</th>
-      <th>Uživatel</th>
-      <th>Produkty</th>
-      <th>Celková cena</th>
-      <th>Datum</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for order in orders %}
-    <tr>
-      <td>{{ order.id }}</td>
-      <td>{{ order.user.username }}</td>
-      <td>
-        <ul>
-          {% for item in order.items %}
-          <li>{{ item.product.name }} ({{ item.quantity }} ks)</li>
-          {% endfor %}
-        </ul>
-      </td>
-      <td>{{ order.total_price }} Kč</td>
-      <td>{{ order.created_at.strftime('%d.%m.%Y') }}</td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
-{% endblock %}
-
-### app/templates/cart.html ###
-{% extends "layout.html" %} {% block title %}Košík{% endblock %} {% block
-content %}
-<div class="cart-wrapper">
-  <h1>Váš košík</h1>
-
-  <div class="cart-container">
-    {% if cart_items %}
-    <table class="cart-table">
-      <thead>
-        <tr>
-          <th>Obrázek</th>
-          <th>Produkt</th>
-          <th>Cena za kus</th>
-          <th>Množství</th>
-          <th>Celková cena</th>
-          <th>Akce</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for item in cart_items %}
-        <tr class="cart-item-row" data-product-id="{{ item.product.id }}">
-          <td class="image-cell">
-            {% if item.product.image_filename %}
-            <div class="image-container">
-              <img
-                src="{{ url_for('static', filename='uploads/' ~ item.product.image_filename) }}"
-                alt="{{ item.product.name }}"
-                class="product-thumbnail"
-              />
-            </div>
-            {% else %}
-            <div class="image-container no-image">
-              <span>Žádný obrázek</span>
-            </div>
-            {% endif %}
-          </td>
-          <td>{{ item.product.name }}</td>
-          <td>{{ item.product.price }} Kč</td>
-          <td>{{ item.quantity }}</td>
-          <td>{{ item.product.price * item.quantity }} Kč</td>
-          <td>
-            <button
-              class="remove-from-cart btn-delete"
-              data-product-id="{{ item.product.id }}"
-            >
-              🗑️ Odebrat
-            </button>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-
-    <div class="cart-summary">
-      <h2>Celkem: {{ total_price }} Kč</h2>
-      <a href="{{ url_for('views.galerie') }}" class="btn-continue"
-        >Pokračovat v nakupování</a
-      >
-    </div>
-    {% else %}
-    <div class="empty-cart">
-      <p>Váš košík je prázdný.</p>
-      <a href="{{ url_for('views.galerie') }}" class="btn-continue"
-        >Přejít do galerie</a
-      >
-    </div>
-    {% endif %}
-  </div>
-</div>
-
-<style>
-  .cart-wrapper {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 20px;
-  }
-
-  h1 {
-    color: #333;
-    text-align: center;
-    margin-bottom: 20px;
-  }
-
-  .cart-container {
-    background-color: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    padding: 20px;
-  }
-
-  .cart-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 20px;
-  }
-
-  .cart-table th,
-  .cart-table td {
-    border: 1px solid #ddd;
-    padding: 12px;
-    text-align: center;
-  }
-
-  .cart-table th {
-    background-color: #f4f4f4;
-    color: #333;
-    font-weight: 600;
-  }
-
-  /* Styly pro obrázky */
-  .image-cell {
-    width: 60px;
-    height: 60px;
-    padding: 4px !important;
-  }
-
-  .image-container {
-    width: 50px;
-    height: 50px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto;
-    background-color: #f8f9fa;
-    border-radius: 4px;
-    overflow: hidden;
-  }
-
-  .no-image {
-    background-color: #e9ecef;
-    color: #6c757d;
-    font-size: 0.8em;
-  }
-
-  .product-thumbnail {
-    width: 50px;
-    height: 50px;
-    object-fit: cover;
-    display: block;
-  }
-
-  /* Tlačítka a akce */
-  .btn-delete {
-    background-color: #dc3545;
-    color: white;
-    border: none;
-    padding: 6px 12px;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background-color 0.2s;
-  }
-
-  .btn-delete:hover {
-    background-color: #c82333;
-  }
-
-  .cart-summary {
-    text-align: right;
-    margin-top: 20px;
-    padding-top: 20px;
-    border-top: 2px solid #eee;
-  }
-
-  .cart-summary h2 {
-    color: #333;
-    margin-bottom: 15px;
-  }
-
-  .btn-continue {
-    display: inline-block;
-    background-color: #28a745;
-    color: white;
-    padding: 10px 20px;
-    text-decoration: none;
-    border-radius: 4px;
-    transition: background-color 0.2s;
-  }
-
-  .btn-continue:hover {
-    background-color: #218838;
-  }
-
-  .empty-cart {
-    text-align: center;
-    padding: 40px 20px;
-  }
-
-  .empty-cart p {
-    color: #666;
-    margin-bottom: 20px;
-    font-size: 1.1em;
-  }
-</style>
-
-<script src="{{ url_for('static', filename='js/cart.js') }}"></script>
-{% endblock %}
-
-### app/templates/home.html ###
-{% extends 'layout.html' %} {% block title %}Domů{% endblock %} {% block content
-%}
-<div class="hero-section">
-  <div class="hero-text">
-    <h1 class="main-title">Umění, které promlouvá</h1>
-    <p class="subtitle">Objevte jedinečné umělecké skvosty pro váš prostor</p>
-  </div>
-</div>
-
-<div class="home-gallery-container">
-  <div class="home-gallery-flex">
-    <div class="gallery-item">
-      <img
-        src="{{ url_for('static', filename='images/IMG_1.jpeg') }}"
-        alt="Umělecké dílo 1"
-      />
-    </div>
-    <div class="gallery-item">
-      <img
-        src="{{ url_for('static', filename='images/IMG_2.jpeg') }}"
-        alt="Umělecké dílo 2"
-      />
-    </div>
-    <div class="gallery-item">
-      <img
-        src="{{ url_for('static', filename='images/IMG_3.jpeg') }}"
-        alt="Umělecké dílo 3"
-      />
-    </div>
-    <div class="gallery-item">
-      <img
-        src="{{ url_for('static', filename='images/IMG_4.jpeg') }}"
-        alt="Umělecké dílo 4"
-      />
-    </div>
-  </div>
-</div>
-{% endblock %}
-
-### app/templates/layout.html ###
-<!DOCTYPE html>
-<html lang="cs">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="csrf-token" content="{{ csrf_token() }}" />
-
-    <title>ArtModerno | {% block title %}{% endblock %}</title>
-    <link
-      rel="stylesheet"
-      href="{{ url_for('static', filename='css/main.css') }}"
-    />
-    <style>
-      .flash-container {
-        position: fixed;
-        top: 10px;
-        right: 10px;
-        width: 300px;
-        z-index: 1000;
+// Funkce pro aktualizaci počtu položek v košíku v navbaru
+function updateCartCount() {
+  fetch("/cart/count", {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      const cartCountElement = document.getElementById("cart-count");
+      if (cartCountElement) {
+        cartCountElement.innerText = data.cart_item_count;
       }
-      .flash-message {
-        padding: 15px;
-        margin-bottom: 10px;
-        border-radius: 5px;
-        color: white;
-        font-weight: bold;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-        animation: fadeIn 0.5s ease-in-out;
-      }
-      .alert-success {
-        background-color: #28a745;
-      }
-      .alert-error {
-        background-color: #dc3545;
-      }
-      .alert-info {
-        background-color: #17a2b8;
-      }
-      .alert-warning {
-        background-color: #ffc107;
-        color: black;
-      }
-      @keyframes fadeIn {
-        from {
-          opacity: 0;
-          transform: translateY(-10px);
+    })
+    .catch((error) =>
+      console.error("Chyba při aktualizaci počtu položek:", error)
+    );
+}
+
+// Přidání produktu do košíku s kontrolou dostupnosti
+document.querySelectorAll(".buy-button").forEach((button) => {
+  button.addEventListener("click", function () {
+    const productId = this.dataset.productId;
+
+    fetch("/cart/add", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(csrfToken && { "X-CSRFToken": csrfToken }),
+      },
+      body: JSON.stringify({ product_id: productId }),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.error) {
+          alert(data.error); // Zobrazení chyby, pokud není produkt skladem
+        } else {
+          alert(data.message); // Zobrazení zprávy o úspěšném přidání
+          updateCartCount(); // Aktualizace počtu položek v košíku
         }
-        to {
-          opacity: 1;
-          transform: translateY(0);
+      })
+      .catch((error) => {
+        console.error("Chyba:", error);
+        alert("Došlo k chybě při přidávání do košíku.");
+      });
+  });
+});
+
+// Odebrání produktu z košíku
+document.querySelectorAll(".remove-from-cart").forEach((button) => {
+  button.addEventListener("click", function () {
+    const productId = this.dataset.productId;
+
+    fetch("/cart/remove", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(csrfToken && { "X-CSRFToken": csrfToken }),
+      },
+      body: JSON.stringify({ product_id: productId }),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        alert(data.message);
+        updateCartCount(); // Aktualizace počtu položek v navbaru
+
+        const productRow = document.querySelector(
+          `tr[data-product-id="${productId}"]`
+        );
+        if (productRow) {
+          productRow.remove();
         }
-      }
-    </style>
-  </head>
-  <body>
-    {% include "navbar.html" %}
-    <div class="flash-container">
-      {% with messages = get_flashed_messages(with_categories=true) %} {% if
-      messages %} {% for category, message in messages %}
-      <div class="flash-message alert-{{ category }}">{{ message }}</div>
-      {% endfor %} {% endif %} {% endwith %}
-    </div>
-    <main class="main-content">{% block content %}{% endblock %}</main>
-    <footer class="footer">
-      <div class="footer-content">
-        <p class="footer-text">© 2025 Arte Moderno. Všechna práva vyhrazena.</p>
-        <div class="social-links">
-          <a href="#" class="social-link">
-            <img
-              src="{{ url_for('static', filename='logo/facebook.svg') }}"
-              alt="Facebook"
-            />
-          </a>
-          <a href="#" class="social-link">
-            <img
-              src="{{ url_for('static', filename='logo/skill-icons_instagram.svg') }}"
-              alt="Instagram"
-            />
-          </a>
-          <a href="#" class="social-link">
-            <img
-              src="{{ url_for('static', filename='logo/x.svg') }}"
-              alt="Twitter/X"
-            />
-          </a>
-        </div>
-      </div>
-    </footer>
-    <script>
-      setTimeout(function () {
-        const flashMessages = document.querySelectorAll(".flash-message");
-        flashMessages.forEach((msg) => {
-          msg.style.opacity = "0";
-          setTimeout(() => msg.remove(), 500);
-        });
-      }, 5000);
 
-      // Ensure CSRF token is globally available
-      window.CSRF_TOKEN = document
-        .querySelector('meta[name="csrf-token"]')
-        .getAttribute("content");
-    </script>
-  </body>
-</html>
+        // Zkontrolovat, zda košík zůstal prázdný
+        const remainingItems = document.querySelectorAll(".cart-item-row");
+        if (remainingItems.length === 0) {
+          document.querySelector(".cart-container").innerHTML =
+            "<p>Váš košík je prázdný.</p>";
+        }
+      })
+      .catch((error) => {
+        console.error("Chyba:", error);
+        alert("Došlo k chybě při odebírání z košíku.");
+      });
+  });
+});
 
-### app/templates/galerie.html ###
-{% extends "layout.html" %}
-{% block title %}Galerie{% endblock %}
-
-{% block content %}
-<h1 class="gallery-heading">Galerie</h1>
-
-<div class="gallery-container">
-  {% for product in products %}
-  <div class="gallery-item {% if loop.index % 2 == 0 %}reverse{% endif %}">
-    <div class="gallery-image">
-      <div class="image-frame">
-        <img src="{{ product.get_image_url() }}" alt="{{ product.name }}">
-      </div>
-    </div>
-    <div class="gallery-info">
-      <h3>{{ product.name }}</h3>
-      <p class="gallery-description">{{ product.description or 'Žádný popis není dostupný' }}</p>
-      <p class="gallery-price"><strong>{{ product.price }} Kč</strong></p>
-      <p class="gallery-stock">
-        {% if product.stock > 0 %}
-          <strong>Skladem: {{ product.stock }} kus(ů)</strong>
-        {% else %}
-          <strong class="out-of-stock">Vyprodáno</strong>
-        {% endif %}
-      </p>
-      <button class="buy-button" data-product-id="{{ product.id }}" {% if product.stock == 0 %}disabled{% endif %}>
-        🛒 Koupit
-      </button>
-    </div>
-  </div>
-  {% else %}
-  <p class="empty-gallery-message">Zatím zde nejsou žádné produkty.</p>
-  {% endfor %}
-</div>
-
-<style>
-  .gallery-heading {
-    text-align: center;
-    font-size: 2.5rem;
-    margin-bottom: 40px;
-    color: #333;
-  }
-
-  .gallery-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 30px;
-    padding: 20px;
-  }
-
-  .gallery-item {
-    background-color: #fff;
-    border-radius: 16px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-    overflow: hidden;
-    transition: transform 0.3s ease;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .gallery-item:hover {
-    transform: translateY(-5px);
-  }
-
-  .gallery-image {
-    width: 100%;
-    height: 250px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: #f8f8f8;
-  }
-
-  .gallery-image img {
-    max-width: 100%;
-    max-height: 100%;
-    object-fit: cover;
-    border-radius: 8px;
-  }
-
-  .gallery-info {
-    padding: 20px;
-    text-align: center;
-  }
-
-  .gallery-info h3 {
-    font-size: 1.5rem;
-    margin-bottom: 10px;
-    color: #444;
-  }
-
-  .gallery-description {
-    font-size: 1rem;
-    color: #666;
-    margin-bottom: 15px;
-  }
-
-  .gallery-price {
-    font-size: 1.2rem;
-    color: #222;
-    margin-bottom: 10px;
-  }
-
-  .gallery-stock {
-    font-size: 1rem;
-    color: #28a745;
-    margin-bottom: 15px;
-  }
-
-  .gallery-stock .out-of-stock {
-    color: #dc3545;
-  }
-
-  .buy-button {
-    background-color: #007bff;
-    color: #fff;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-  }
-
-  .buy-button:hover {
-    background-color: #0056b3;
-  }
-
-  .buy-button[disabled] {
-    background-color: #ccc;
-    cursor: not-allowed;
-  }
-
-  .empty-gallery-message {
-    text-align: center;
-    font-size: 1.2rem;
-    color: #666;
-  }
-
-  @media (max-width: 600px) {
-    .gallery-heading {
-      font-size: 2rem;
-    }
-
-    .gallery-item {
-      flex-direction: column;
-    }
-  }
-</style>
-
-<script src="{{ url_for('static', filename='js/cart.js') }}"></script>
-{% endblock %}
-
-Lorem ipsum dolor sit amet, consectetur adipisicing elit. Veniam doloremque ad necessitatibus fuga, nihil porro laborum, at ratione minus ea molestiae alias reiciendis error itaque natus eveniet in, quisquam eos.
-
-### app/templates/kontakt.html ###
-{% extends "layout.html" %} {% block title %}Kontakt{% endblock %} {% block
-content %}
-<h1>Kontakt</h1>
-
-<form method="POST" action="{{ url_for('views.kontakt') }}">
-  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> <!-- CSRF token -->
-
-  <label for="name">Jméno:</label>
-  <input type="text" id="name" name="name" required /><br /><br />
-
-  <label for="email">E-mail:</label>
-  <input type="email" id="email" name="email" required /><br /><br />
-
-  <label for="subject">Předmět:</label>
-  <input type="text" id="subject" name="subject" /><br /><br />
-
-  <label for="message">Zpráva:</label><br />
-  <textarea id="message" name="message" rows="5" cols="40" required></textarea><br /><br />
-
-  <button type="submit">Odeslat</button>
-</form>
-
-</form>
-{% endblock %}
-
-### app/templates/list_inquiries.html ###
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>Seznam dotazů</title>
-</head>
-<body>
-    <h1>Seznam dotazů v DB</h1>
-    <ul>
-    {% for i in inquiries %}
-        <li>
-            <strong>{{ i.name }}</strong> 
-            ({{ i.email }})<br>
-            Předmět: {{ i.subject }}<br>
-            Zpráva: {{ i.message }}<br>
-            <em>vloženo: {{ i.created_at }}</em>
-        </li>
-        <hr>
-    {% endfor %}
-    </ul>
-</body>
-</html>
-
-### app/templates/navbar.html ###
-<nav class="navbar">
-  <div class="navbar-logo">
-    <a href="{{ url_for('views.home') }}">
-      <img
-        src="{{ url_for('static', filename='logo/Logo_4_svg.svg') }}"
-        alt="ArtModerno Logo"
-      />
-    </a>
-  </div>
-
-  <div class="navbar-links">
-    <a href="{{ url_for('views.home') }}" class="nav-link">Home</a>
-    <a href="{{ url_for('views.galerie') }}" class="nav-link">Galerie</a>
-    <a href="{{ url_for('views.kontakt') }}" class="nav-link">Kontakt</a>
-
-    {% if current_user.is_authenticated %} {% if current_user.role == 'admin' %}
-    <a href="{{ url_for('admin.dashboard') }}" class="nav-link">Admin Panel</a>
-    {% else %}
-    <!-- Ikona košíku pro běžné uživatele -->
-    <a href="{{ url_for('cart.view_cart') }}" class="nav-link cart-icon">
-      🛒 <span id="cart-count">{{ cart_item_count }}</span>
-    </a>
-    {% endif %}
-    <a href="{{ url_for('views.logout') }}" class="nav-link">Odhlásit se</a>
-    {% else %}
-    <a href="{{ url_for('views.register') }}" class="nav-link">Registrace</a>
-    <a href="{{ url_for('views.login') }}" class="nav-link">Přihlášení</a>
-    {% endif %}
-  </div>
-</nav>
-
-### app/templates/edit_product.html ###
-{% extends "layout.html" %} {% block title %}Upravit produkt{% endblock %} {%
-block content %}
-<h2>Upravit produkt</h2>
-
-<!-- Flash zprávy -->
-{% with messages = get_flashed_messages(with_categories=true) %} {% if messages
-%}
-<ul>
-  {% for category, message in messages %}
-  <li class="alert-{{ category }}">{{ message }}</li>
-  {% endfor %}
-</ul>
-{% endif %} {% endwith %}
-
-<!-- Formulář pro úpravu produktu -->
-<form
-  method="POST"
-  action="{{ url_for('admin.edit_product', product_id=product.id) }}"
-  enctype="multipart/form-data"
->
-  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-  <!-- CSRF token -->
-  <label for="position_id">ID pozice:</label>
-  <input
-    type="number"
-    name="position_id"
-    id="position_id"
-    value="{{ product.position_id }}"
-    required
-  /><br /><br />
-
-  <label for="name">Název produktu:</label>
-  <input
-    type="text"
-    name="name"
-    id="name"
-    value="{{ product.name }}"
-    required
-  /><br /><br />
-
-  <label for="price">Cena (Kč):</label>
-  <input
-    type="number"
-    step="0.01"
-    name="price"
-    id="price"
-    value="{{ product.price }}"
-    required
-  /><br /><br />
-
-  <label for="description">Popis:</label><br />
-  <textarea name="description" id="description" rows="4">
-{{ product.description }}</textarea
-  ><br /><br />
-
-  <!-- Zobrazení aktuálního obrázku -->
-  {% if product.image_filename %}
-  <p>Aktuální obrázek:</p>
-  <img
-    src="{{ product.get_image_url() }}"
-    alt="{{ product.name }}"
-    style="max-width: 200px"
-  /><br /><br />
-
-  <!-- Možnost smazat obrázek -->
-  <input type="checkbox" name="delete_image" id="delete_image" />
-  <label for="delete_image">Smazat aktuální obrázek</label><br /><br />
-  {% endif %}
-
-  <!-- Nahrání nového obrázku -->
-  <label for="image">Nahrát nový obrázek:</label>
-  <input type="file" name="image" id="image" accept="image/*" /><br /><br />
-
-  <button type="submit">Uložit změny</button>
-</form>
-
-<a href="{{ url_for('admin.dashboard') }}">⬅️ Zpět na dashboard</a>
-{% endblock %}
-
-### app/templates/login.html ###
-login_html = """ {% extends "layout.html" %} {% block title %}Přihlášení{%
-endblock %} {% block content %}
-<h1>Přihlášení</h1>
-<form method="POST" action="{{ url_for('views.login') }}">
-  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> <!-- CSRF token -->
-
-  <label for="email">E-mail:</label>
-  <input type="email" name="email" id="email" required /><br /><br />
-
-  <label for="password">Heslo:</label>
-  <input type="password" name="password" id="password" required /><br /><br />
-
-  <button type="submit">Přihlásit</button>
-</form>
-<p>
-  Nemáte ještě účet?
-  <a href="{{ url_for('views.register') }}">Zaregistrujte se</a>.
-</form>
-{% endblock %}
-
-### app/templates/register.html ###
-{% extends "layout.html" %} {% block title %}Registrace{% endblock %} {% block
-content %}
-<h1>Registrace</h1>
-<form method="POST" action="{{ url_for('views.register') }}">
-  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-  <!-- CSRF token -->
-
-  <label for="username">Uživatelské jméno:</label>
-  <input type="text" name="username" id="username" required /><br /><br />
-
-  <label for="email">E-mail:</label>
-  <input type="email" name="email" id="email" required /><br /><br />
-
-  <label for="password">Heslo:</label>
-  <input type="password" name="password" id="password" required /><br /><br />
-
-  <label for="confirm_password">Potvrzení hesla:</label>
-  <input
-    type="password"
-    name="confirm_password"
-    id="confirm_password"
-    required
-  /><br /><br />
-
-  <button type="submit">Registrovat</button>
-</form>
-
-{% endblock %}
+// Automatická aktualizace počtu položek při načtení stránky
+document.addEventListener("DOMContentLoaded", updateCartCount);
 
 ### app/static/css/admin_dashboard.css ###
 
@@ -2515,101 +2602,4 @@ body {
 
 ### app/static/css/register.css ###
 
-
-### app/static/JS/cart.js ###
-// Načtení CSRF tokenu z meta tagu
-const csrfToken = document
-  .querySelector('meta[name="csrf-token"]')
-  ?.getAttribute("content");
-
-// Funkce pro aktualizaci počtu položek v košíku v navbaru
-function updateCartCount() {
-  fetch("/cart/count", {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  })
-    .then((response) => response.json())
-    .then((data) => {
-      const cartCountElement = document.getElementById("cart-count");
-      if (cartCountElement) {
-        cartCountElement.innerText = data.cart_item_count;
-      }
-    })
-    .catch((error) =>
-      console.error("Chyba při aktualizaci počtu položek:", error)
-    );
-}
-
-// Přidání produktu do košíku s kontrolou dostupnosti
-document.querySelectorAll(".buy-button").forEach((button) => {
-  button.addEventListener("click", function () {
-    const productId = this.dataset.productId;
-
-    fetch("/cart/add", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(csrfToken && { "X-CSRFToken": csrfToken }),
-      },
-      body: JSON.stringify({ product_id: productId }),
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        if (data.error) {
-          alert(data.error); // Zobrazení chyby, pokud není produkt skladem
-        } else {
-          alert(data.message); // Zobrazení zprávy o úspěšném přidání
-          updateCartCount(); // Aktualizace počtu položek v košíku
-        }
-      })
-      .catch((error) => {
-        console.error("Chyba:", error);
-        alert("Došlo k chybě při přidávání do košíku.");
-      });
-  });
-});
-
-// Odebrání produktu z košíku
-document.querySelectorAll(".remove-from-cart").forEach((button) => {
-  button.addEventListener("click", function () {
-    const productId = this.dataset.productId;
-
-    fetch("/cart/remove", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(csrfToken && { "X-CSRFToken": csrfToken }),
-      },
-      body: JSON.stringify({ product_id: productId }),
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        alert(data.message);
-        updateCartCount(); // Aktualizace počtu položek v navbaru
-
-        const productRow = document.querySelector(
-          `tr[data-product-id="${productId}"]`
-        );
-        if (productRow) {
-          productRow.remove();
-        }
-
-        // Zkontrolovat, zda košík zůstal prázdný
-        const remainingItems = document.querySelectorAll(".cart-item-row");
-        if (remainingItems.length === 0) {
-          document.querySelector(".cart-container").innerHTML =
-            "<p>Váš košík je prázdný.</p>";
-        }
-      })
-      .catch((error) => {
-        console.error("Chyba:", error);
-        alert("Došlo k chybě při odebírání z košíku.");
-      });
-  });
-});
-
-// Automatická aktualizace počtu položek při načtení stránky
-document.addEventListener("DOMContentLoaded", updateCartCount);
 

@@ -15,6 +15,8 @@
       <img
         src="{{ product.get_image_url() }}"
         alt="{{ product.name }}"
+        class="gallery-image"
+        data-full-url="{{ product.get_image_url() }}"
       />
     </div>
     {% else %}
@@ -24,4 +26,40 @@
     {% endfor %}
   </div>
 </div>
+
+<!-- Modal for image viewer -->
+<div id="imageModal" class="modal">
+  <span class="modal-close">&times;</span>
+  <img class="modal-content" id="modalImage">
+</div>
+
+<script>
+  // Get modal elements
+  const modal = document.getElementById("imageModal");
+  const modalImg = document.getElementById("modalImage");
+  const closeBtn = document.querySelector(".modal-close");
+
+  // Get all gallery images
+  const images = document.querySelectorAll(".gallery-image");
+
+  // Add click event to each image
+  images.forEach((img) => {
+    img.addEventListener("click", function () {
+      modal.style.display = "block";
+      modalImg.src = this.dataset.fullUrl; // Use data-full-url attribute
+    });
+  });
+
+  // Close modal when clicking the close button
+  closeBtn.addEventListener("click", function () {
+    modal.style.display = "none";
+  });
+
+  // Close modal when clicking outside the image
+  window.addEventListener("click", function (event) {
+    if (event.target === modal) {
+      modal.style.display = "none";
+    }
+  });
+</script>
 {% endblock %}
