@@ -15,7 +15,8 @@ cart = Blueprint("cart", __name__, url_prefix="/cart")
 
 @views.route("/", methods=["GET"])
 def home():
-    return render_template("home.html")  # jen příklad
+    products = Product.query.limit(4).all()  # You can limit this with .limit(4) if you only want 4 items
+    return render_template("home.html", products=products)
 
 @views.route("/galerie")
 def galerie():

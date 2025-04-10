@@ -1,5 +1,6 @@
-{% extends 'layout.html' %} {% block title %}Domů{% endblock %} {% block content
-%}
+{% extends 'layout.html' %}
+{% block title %}Domů{% endblock %}
+{% block content %}
 <div class="hero-section">
   <div class="hero-text">
     <h1 class="main-title">Umění, které promlouvá</h1>
@@ -9,30 +10,18 @@
 
 <div class="home-gallery-container">
   <div class="home-gallery-flex">
+    {% for product in products %}
     <div class="gallery-item">
       <img
-        src="{{ url_for('static', filename='images/IMG_1.jpeg') }}"
-        alt="Umělecké dílo 1"
+        src="{{ product.get_image_url() }}"
+        alt="{{ product.name }}"
       />
     </div>
+    {% else %}
     <div class="gallery-item">
-      <img
-        src="{{ url_for('static', filename='images/IMG_2.jpeg') }}"
-        alt="Umělecké dílo 2"
-      />
+      <p>Žádné produkty nebyly nalezeny.</p>
     </div>
-    <div class="gallery-item">
-      <img
-        src="{{ url_for('static', filename='images/IMG_3.jpeg') }}"
-        alt="Umělecké dílo 3"
-      />
-    </div>
-    <div class="gallery-item">
-      <img
-        src="{{ url_for('static', filename='images/IMG_4.jpeg') }}"
-        alt="Umělecké dílo 4"
-      />
-    </div>
+    {% endfor %}
   </div>
 </div>
 {% endblock %}
