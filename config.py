@@ -22,5 +22,5 @@ class Config:
     # MAIL_USERNAME = 'artemodernoblaha@gmail.com'  # Váš e-mail
     # MAIL_PASSWORD = 'qxunfbtnyvefainm'  # App Password pro Gmail
 
-    MAIL_USERNAME = os.getenv(MAIL_USERNAME)
-    MAIL_PASSWORD = os.getenv(MAIL_PASSWORD)
+    MAIL_USERNAME = os.getenv("MAIL_USERNAME")
+    MAIL_PASSWORD = os.getenv("MAIL_PASSWORD")
